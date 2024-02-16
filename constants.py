@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 #
 #constants for ExpressionLncr scripts and GUI
 #
@@ -97,8 +97,8 @@ GET_LNCRNA_DEFAULTS = {
 # Some constants for the lncRNA GUI program
 #
 
-APP_MIN_WIDTH = 600
-APP_MIN_HEIGHT = 400
+APP_MIN_WIDTH = 640
+APP_MIN_HEIGHT = 480
 APP_QUIT_MESSAGE = 'Quit the program?'
 APP_TITLE = 'ExpressionLncr'
 
@@ -112,13 +112,15 @@ GREETER_BUTTON_MSG = 'Continue'
 GREETER_TEXT = '<h3>Introduction</h3><p>ExpressionLncr is designed to help you investigate ' + \
     'functionality of lncRNAs by leveraging existing gene expression data.</p>' + \
     '<p>This GUI can be run via either a standalone executable or the source code. ' + \
-    'Python2 (tested v2.7.10) and PySide (tested v1.2.2) are needed to run the ' + \
+    'Python3 (tested v3.11) and PySide6 are needed to run the ' + \
     'GUI source.</p><p>Nothing is required to run the standalone ' + \
     'GUI version, but you must download the appropriate build for your operating system.</p>' + \
     '<p>Alternatively, the source behind all the tools can be run as ' + \
     'command-line programs.</p>'  + \
     '<p>You can find more help and ExpressionLncr can be (re-)downloaded ' + \
-    'at: <a href="http://genapha.hli.ubc.ca/lncrna">genapha.hli.ubc.ca/lncrna</a></p>'
+    'at:</p>' + \
+    '<p><a href="https://github.com/daley-lab/expressionlncr">github.com/daley-lab/expressionlncr</a></p>' + \
+    '<p><a href="http://genapha.hli.ubc.ca/lncrna">genapha.hli.ubc.ca/lncrna</a></p>'
     #TODO uncomment when tools are in Galaxy toolshed
 #    '<p>ExpressionLncr is also available as a Galaxy tool set at: ' + \
 #    '<a href="https://toolshed.g2.bx.psu.edu/view/genapha/expressionlncr/MY_HASH">' + \
