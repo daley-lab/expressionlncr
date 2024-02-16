@@ -77,17 +77,17 @@ def parseFileNames(completedFilesFile):
   return fileNames
 
 def parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFilesFile):
-  print 'Parsing data started @ %s...' % str(datetime.datetime.now())
+  print('Parsing data started @ %s...' % str(datetime.datetime.now()))
   #read in overlap file and make map of lncrna -> probe
-  print 'Reading in lncrna/probe overlap file %s ...' % overlapFile
+  print('Reading in lncrna/probe overlap file %s ...' % overlapFile)
   overlapMap = parseOverlapFile(overlapFile)
   if not overlapMap:
-    print 'Error: could not parse overlap file %s' % overlapFile 
+    print('Error: could not parse overlap file %s' % overlapFile) 
     return
-  print 'Reading in data series matrix files @ %s/GSE*_series_matrix.txt.gz ...' % dataDir
+  print('Reading in data series matrix files @ %s/GSE*_series_matrix.txt.gz ...' % dataDir)
   #make sure data dir exists
   if not os.path.exists(dataDir):
-    print >> sys.stderr, 'No data directory at: %s' % dataDir
+    print('No data directory at: %s' % dataDir, file=sys.stderr)
     raise err
   #create output dir if doesn't exist already
   downloader.createPathToFile(outDir + '/')
@@ -109,11 +109,11 @@ def parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFiles
     completedFiles = parseFileNames(completedFilesFile)
   except IOError as ioe:
     #no existing file, create
-    print 'No completed files file %s, creating ...' % completedFilesFile
+    print('No completed files file %s, creating ...' % completedFilesFile)
     with open(completedFilesFile, 'wb') as cff:
       cff.write('')
   if len(completedFiles) > 0:
-    print 'Skipping parsing for following files (already complete): %s ...' % (','.join(completedFiles))
+    print('Skipping parsing for following files (already complete): %s ...' % (','.join(completedFiles)))
   #parse all files that haven't been already
   filesToParse = Set(matrixFileNames).difference(completedFiles)
   with open(completedFilesFile, 'ab') as completeFile:
@@ -123,7 +123,7 @@ def parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFiles
     # any lncrna/expression results to file
     for fileName in sorted(filesToParse):
       count += 1
-      print ' > parsing file (%s/%s): %s @ %s' % (count, numFiles, fileName, str(datetime.datetime.now()))
+      print(' > parsing file (%s/%s): %s @ %s' % (count, numFiles, fileName, str(datetime.datetime.now())))
       try:
         #create map of GPL -> probeSet -> probeName -> list(tuple(max probe val among samples, GSE))
         with gzip.open(fileName, 'rb') as matrixFile:
@@ -134,24 +134,24 @@ def parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFiles
             expressedLncrnasDir, os.path.basename(fileName))
         writeExpressedLncrnas(lncrnaExpressionMap, seriesExpressedLncrnasFile)
       except Exception as err:
-        print >> sys.stderr, err
-        print >> sys.stderr, 'Could not parse series matrix data file: %s' % fileName
+        print(err, file=sys.stderr)
+        print('Could not parse series matrix data file: %s' % fileName, file=sys.stderr)
       completeFile.write('%s\n' % fileName)
   #once all the expressed lncrna files for each GEO series are written, 
   # then merge them all  into one expressed lncrna file that the user expects.
   #write header line of expressed lncrnas file once only
   expressedLncrnasFile = '%s/expressed.lncrnas.txt' % outDir
-  print '> Expressed lncRNAs file will be written to: %s' % expressedLncrnasFile
+  print('> Expressed lncRNAs file will be written to: %s' % expressedLncrnasFile)
   expressedLncrnas = mergeExpressedLncrnaFiles(expressedLncrnasDir, expressedLncrnasFile)
   #create output file of lncrnas with overlap but missing expression data
   # (i.e. not in expressedLncrnas list but in overlapMap)
   try:
     noExpressionDataLncrnasFile = '%s/noexpressiondata.lncrnas.txt' % outDir
-    print '> No expression data lncRNAs file: %s ... @ %s' % ( \
-        noExpressionDataLncrnasFile, str(datetime.datetime.now()))
+    print('> No expression data lncRNAs file: %s ... @ %s' % ( \
+        noExpressionDataLncrnasFile, str(datetime.datetime.now())))
     with open(noExpressionDataLncrnasFile, 'wb') as nedlf:
       noDataList = []
-      for (lncrnaName, lncrnaProbeList) in overlapMap.iteritems():
+      for (lncrnaName, lncrnaProbeList) in overlapMap.items():
         if lncrnaName.upper() not in expressedLncrnas:
           noDataList.append(lncrnaProbeList)
       header = '#lncRNA\toverlapping Ensembl probe(s), comma delimited\n'
@@ -172,17 +172,17 @@ def parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFiles
         line += '\n'
         nedlf.write(line)
   except Exception as err:
-    print >> sys.stderr, err
-    print >> sys.stderr, 'Error writing no expression data lncRNAs'
+    print(err, file=sys.stderr)
+    print('Error writing no expression data lncRNAs', file=sys.stderr)
   #use original lncrna file with all lncrnas to make output file of lncrnas #
   # w/ no overlap.
   try:
-    print '> Parsing all lncRNAs from original input %s ...' % lncrnaFile
+    print('> Parsing all lncRNAs from original input %s ...' % lncrnaFile)
     lncrnaList = parseLncrnasFromBed(lncrnaFile)
     nonOverlappingLncrnas = getNonOverlappingLncnras(lncrnaList, overlapMap)
     nonOverlappingLncrnasFile = '%s/nonoverlapping.lncrnas.txt' % outDir
-    print '> Non-overlapping lncRNAs file: %s ... @ %s' % ( \
-        noExpressionDataLncrnasFile, str(datetime.datetime.now()))
+    print('> Non-overlapping lncRNAs file: %s ... @ %s' % ( \
+        noExpressionDataLncrnasFile, str(datetime.datetime.now())))
     with open(nonOverlappingLncrnasFile, 'wb') as nolf:
       header = '#lncRNAs from lncRNA source not overlapping Ensembl probe(s)\n'
       nolf.write(header)
@@ -190,9 +190,9 @@ def parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFiles
         line = '%s\n' % lncrna
         nolf.write(line)
   except Exception as err:
-    print >> sys.stderr, err
-    print >> sys.stderr, 'Error writing non-overlapping lncRNAs'
-  print 'Finished parsing data @ %s' % str(datetime.datetime.now())
+    print(err, file=sys.stderr)
+    print('Error writing non-overlapping lncRNAs', file=sys.stderr)
+  print('Finished parsing data @ %s' % str(datetime.datetime.now()))
 
 #given a map of lncrna/probe overlap, and lncrna expression, returns
 # a map of lncrna -> probe expression.
@@ -200,7 +200,7 @@ def getLncrnaExpressionMap(overlapMap, expressionMap, organism):
   #map the expression map probe name to the overlap file's expression probe name (-> lncrna).
   # then construct map of lncrna -> expression.
   lncrnaExpressionMap = {}
-  for (lncrnaName, lncrnaProbeList) in overlapMap.iteritems():
+  for (lncrnaName, lncrnaProbeList) in overlapMap.items():
     #if there's probes matched to this lncrna
     if len(lncrnaProbeList) > 1:
       #initialise map where we'll store expressed probes for this lncrna
@@ -261,7 +261,7 @@ def writeExpressedLncrnas(lncrnaExpressionMap, expressedLncrnasFile):
       #for each set of probe expressions for a lncrna find out if any are expression > 0.
       #write out to appropriate output file.
       #note: lncrna is a ChromFeature bean
-      for (lncrnaBean, probeExpressions) in sorted(lncrnaExpressionMap.iteritems()):
+      for (lncrnaBean, probeExpressions) in sorted(lncrnaExpressionMap.items()):
         #we have new expression
         if probeExpressions and len(probeExpressions) > 0:
           probeColString = ''
@@ -303,8 +303,8 @@ def writeExpressedLncrnas(lncrnaExpressionMap, expressedLncrnasFile):
           #print >> sys.stderr, 'Warning: Expected expression data for lncRNA ' + \
           #    '%s but none found. Check the "no expression data" lncRNAs file for a full list.' % lncrnaBean.name
   except Exception as err:
-    print >> sys.stderr, err
-    print >> sys.stderr, 'Error writing expressed lncRNAs file %s' % expressedLncrnasFile
+    print(err, file=sys.stderr)
+    print('Error writing expressed lncRNAs file %s' % expressedLncrnasFile, file=sys.stderr)
 
 #join all the files of lncrna/expression probes into one file.
 # returns list of expressed lncRNA names (strings).
@@ -333,7 +333,7 @@ def mergeExpressedLncrnaFiles(dataDir, outputFile):
   count = 1
   for fileName in sorted(fileNames):
     #read in series specific lncrna expression map
-    print ' > merging file (%s/%s): %s @ %s' % (count, numFiles, fileName, str(datetime.datetime.now()))
+    print(' > merging file (%s/%s): %s @ %s' % (count, numFiles, fileName, str(datetime.datetime.now())))
     count += 1
     fileExpressionMap = {}
     with open(fileName, 'rb') as f:
@@ -363,7 +363,7 @@ def mergeExpressedLncrnaFiles(dataDir, outputFile):
     for lncrna in sorted(lncrnaExpressionMap):
       line = '\t'.join(lncrnaExpressionMap[lncrna]) + '\n'
       out.write(line)
-  return lncrnaExpressionMap.keys()
+  return list(lncrnaExpressionMap.keys())
 
 def parseSeriesDataMatrix(matrixFile):
   #map of GPL -> probe set -> probe name -> list(tuple(GSE, probe max value)).
@@ -377,11 +377,11 @@ def parseSeriesDataMatrix(matrixFile):
     #get the GSE, series accession
     if line.startswith('!Series_geo_accession'):
       gse = line.replace('"', '').split('\t')[1].strip().upper()
-      print ' > got %s' % gse
+      print(' > got %s' % gse)
     #get the GPL, series platform accession
     if line.startswith('!Series_platform_id'):
       gpl = line.replace('"', '').split('\t')[1].strip().upper()
-      print ' > got %s' % gpl
+      print(' > got %s' % gpl)
     if readTableRow:
       #read in a row of the table. (probeSet/)probeName\tsample1Val\tsample2Val ...
       cols = line.replace('"', '').split('\t')
@@ -425,7 +425,7 @@ def parseSeriesDataMatrix(matrixFile):
       #double-check that we got both the gse and gpl which are to be keys 
       # for probe expression map
       if not gse or not gpl:
-        print >> sys.stderr, 'Malformed series data matrix file: %s' % fileName
+        print('Malformed series data matrix file: %s' % fileName, file=sys.stderr)
         break
       readTableHeader = True
       continue
@@ -438,7 +438,7 @@ def parseSeriesDataMatrix(matrixFile):
 # map is a/b.name -> (a/b, b/a, b/a, ...) list of ChromFeature.
 # note XML maps a -> children b. reverse makes overlapMap of b -> a.
 def parseOverlapFile(overlapFile, reverse=False):
-  print 'Parsing overlap file %s @ %s ...' % (overlapFile, str(datetime.datetime.now()))
+  print('Parsing overlap file %s @ %s ...' % (overlapFile, str(datetime.datetime.now())))
   xml = open(overlapFile, 'rb')
   tree = cet.parse(xml)
   root = tree.getroot()
@@ -457,8 +457,8 @@ def parseOverlapFile(overlapFile, reverse=False):
       if not keyfeat or not mappedfeat:
         #probably indicates a malformed overlap XML file.
         # warn but continue parsing
-        print 'Warning: likely malformed overlap file %s' % overlapFile
-        print '\t> Missing child <B> elements for <A> elements'
+        print('Warning: likely malformed overlap file %s' % overlapFile)
+        print('\t> Missing child <B> elements for <A> elements')
         continue
       try:
         feats = overlapMap[keyfeat.name]
@@ -494,7 +494,7 @@ def parseLncrnasFromBed(lncrnaFile):
         lncrna = cols[nameCol]
         lncrnaList.append(lncrna)
   except Exception as err:
-    print >> sys.stderr, 'Error parsing file %s for lncRNAs. Output file of lncRNAs not found to ooverlap with probes will be missing!' % lncrnaFile
+    print('Error parsing file %s for lncRNAs. Output file of lncRNAs not found to ooverlap with probes will be missing!' % lncrnaFile, file=sys.stderr)
   return lncrnaList
 
 def getNonOverlappingLncnras(lncrnaList, overlapMap):
@@ -507,22 +507,22 @@ def getNonOverlappingLncnras(lncrnaList, overlapMap):
     if lncrna not in overlapMap:
       nonOverlappingLncrnas.append(lncrna)
   numLncrnas = len(lncrnaList)
-  numOverlapping = len(overlapMap.keys())
+  numOverlapping = len(list(overlapMap.keys()))
   numNonOverlapping = len(nonOverlappingLncrnas)
-  print '# lncrnas: %s' % numLncrnas
-  print '# overlapping lncrnas: %s' % numOverlapping
-  print '# non-overlapping lncrnas: %s' % numNonOverlapping
+  print('# lncrnas: %s' % numLncrnas)
+  print('# overlapping lncrnas: %s' % numOverlapping)
+  print('# non-overlapping lncrnas: %s' % numNonOverlapping)
   if (numOverlapping + numNonOverlapping) != numLncrnas:
-    print 'Warning: number of lncRNAs in getNonOverlappingLncrnas did not add up!'
+    print('Warning: number of lncRNAs in getNonOverlappingLncrnas did not add up!')
   return nonOverlappingLncrnas
 
 def usage(defaults):
-  print 'Usage: ' + sys.argv[0] + \
-      ' -d, --data-dir <DIRECTORY> -o, --out-dir <DIRECTORY> -f, --overlap-file <FILE>'
-  print 'Example: ' + sys.argv[0] + ' -d data/matrices -o data/results -f data/overlap.xml'
-  print 'Defaults:'
-  for key, val in sorted(defaults.iteritems(), key=operator.itemgetter(0)):
-    print str(key) + ' - ' + str(val)
+  print('Usage: ' + sys.argv[0] + \
+      ' -d, --data-dir <DIRECTORY> -o, --out-dir <DIRECTORY> -f, --overlap-file <FILE>')
+  print('Example: ' + sys.argv[0] + ' -d data/matrices -o data/results -f data/overlap.xml')
+  print('Defaults:')
+  for key, val in sorted(iter(defaults.items()), key=operator.itemgetter(0)):
+    print(str(key) + ' - ' + str(val))
 
 def __main__():
   shortOpts = 'hf:d:o:l:r:c:'
@@ -537,7 +537,7 @@ def __main__():
   try:
     opts, args = getopt.getopt(sys.argv[1:], shortOpts, longOpts)
   except getopt.GetoptError as err:
-    print str(err)
+    print(str(err))
     usage(defaults)
     sys.exit(2)
   for opt, arg in opts:

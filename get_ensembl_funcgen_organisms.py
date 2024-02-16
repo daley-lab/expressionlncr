@@ -56,11 +56,11 @@ def parseFtpIndexForOrganisms(url, output, prettify, arrayFiles, dataDir):
   #if requested download the array info files for these funcgen databases to a directory
   if arrayFiles and dataDir: 
     downloader.createPathToFile(dataDir)
-    for (org, pretty) in organisms.iteritems():
+    for (org, pretty) in organisms.items():
       arrayFileUrl = '%s%s/array.txt.gz' % (url, org)
       arrayFileUnzip = '%s/array.%s.txt' % (dataDir, org)
       arrayFileOut = '%s.gz' % (arrayFileUnzip)
-      print 'downloading %s to %s' % (arrayFileUrl, arrayFileOut)
+      print('downloading %s to %s' % (arrayFileUrl, arrayFileOut))
       downloader.simpleDownload(arrayFileUrl, arrayFileOut)
       ziptools.gunzip(arrayFileOut, arrayFileUnzip)
       downloader.remove(arrayFileOut)
@@ -82,11 +82,11 @@ def prettifyOrganism(organism):
   return pretty
 
 def usage(defaults):
-  print 'Usage: ' + sys.argv[0] + ' -u, --url <ENSEMBL_FTP> -o, --output <OUTPUT>'
-  print 'Example: ' + sys.argv[0] + ' --output available_organisms.txt'
-  print 'Defaults:'
-  for key, val in sorted(defaults.iteritems(), key=operator.itemgetter(0)):
-    print str(key) + ' - ' + str(val)
+  print('Usage: ' + sys.argv[0] + ' -u, --url <ENSEMBL_FTP> -o, --output <OUTPUT>')
+  print('Example: ' + sys.argv[0] + ' --output available_organisms.txt')
+  print('Defaults:')
+  for key, val in sorted(iter(defaults.items()), key=operator.itemgetter(0)):
+    print(str(key) + ' - ' + str(val))
 
 def __main__():
   shortOpts = 'ho:u:p:'
@@ -100,7 +100,7 @@ def __main__():
   try:
     opts, args = getopt.getopt(sys.argv[1:], shortOpts, longOpts)
   except getopt.GetoptError as err:
-    print str(err)
+    print(str(err))
     usage(defaults)
     sys.exit(2)
   for opt, arg in opts:

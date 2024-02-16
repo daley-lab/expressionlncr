@@ -30,9 +30,9 @@ def getChunks(iterable, chunksize=50000):
     yield chunk
 
 def __main__(argv):
-  for chunk in getChunks(range(0,100), chunksize=10):
+  for chunk in getChunks(list(range(0,100)), chunksize=10):
     for c in chunk:
-      print c
+      print(c)
 
 if __name__ == '__main__':
   __main__(sys.argv)

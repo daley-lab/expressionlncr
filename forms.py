@@ -26,7 +26,7 @@ def getOrgKeyFromPrettyUnicode(organism, availableOrganismsDict=None):
   orgKey = None
   orgstring = organism.encode('utf8')
   orgDict = availableOrganismsDict if availableOrganismsDict else c.PROBE_ENSEMBL_ORGANISMS
-  for (key, val) in orgDict.iteritems():
+  for (key, val) in orgDict.items():
     #if the first word of the organism string is in the dictionary value good enough
     if orgstring.split(' ')[0] in val:
       orgKey = key.strip()
@@ -113,7 +113,7 @@ class FileChooser(QWidget):
       filename = QFileDialog.getExistingDirectory(parent=self, caption=self.title,
         dir=startLocation, options=QFileDialog.ShowDirsOnly)
     else:
-      print sys.stderr, 'Invalid dialog type passed to FileChooser %s' % (self.dialogType)
+      print(sys.stderr, 'Invalid dialog type passed to FileChooser %s' % (self.dialogType))
     #if user cancels don't reset
     if filename:
       self.fileLabel.setText(filename)
@@ -172,13 +172,13 @@ class GuiForm(QWidget):
 
   @Slot()
   def onRunButton(self):
-    print 'Setting up job: %s...' % GuiJob.typeNames[self.getJobType()]
+    print('Setting up job: %s...' % GuiJob.typeNames[self.getJobType()])
     self.jobArgs = self.getJobArgs()
     if not self.jobArgs:
       ErrorMessageBox.show(self, c.ERROR_INVALID_JOB)
     self.jobType = self.getJobType()
     #call a new gui job process
-    print 'Job args: %s' % (' '.join(self.jobArgs))
+    print('Job args: %s' % (' '.join(self.jobArgs)))
     self.job = GuiJob(jobArgs=self.jobArgs)
     self.job.started.connect(self.onJobStarted)
     self.job.finished.connect(self.onJobFinished)
@@ -200,7 +200,7 @@ class GuiForm(QWidget):
 
   @Slot()
   def onJobError(self):
-    print 'Error: running job %s' % (GuiJob.typeNames[self.getJobType()])
+    print('Error: running job %s' % (GuiJob.typeNames[self.getJobType()]))
     ErrorMessageBox.show(self, c.ERROR_RUNNING_JOB)
 
 
@@ -247,12 +247,12 @@ class LncrnaForm(GuiForm):
     #options form
     formLayout = QFormLayout()
     self.source = ComboBox()
-    self.source.addItems([val for (key, val) in c.LNCRNA_SOURCE_ITEMS.iteritems()])
+    self.source.addItems([val for (key, val) in c.LNCRNA_SOURCE_ITEMS.items()])
     self.source.currentIndexChanged.connect(self.onChangeSource)
     self.sourceFile = FileChooser(dialogType=c.OPEN_DIALOG_TYPE, fileTypes=c.BED_FILE_TYPE)
     self.sourceFile.hide()
     self.organism = ComboBox()
-    self.organism.addItems(sorted([val for (key, val) in c.LNCRNA_NONCODE_ORGANISMS.iteritems()]))
+    self.organism.addItems(sorted([val for (key, val) in c.LNCRNA_NONCODE_ORGANISMS.items()]))
     self.output = FileChooser(dialogType=c.SAVE_DIALOG_TYPE, fileTypes=c.BED_FILE_TYPE)
     formLayout.addRow(c.LNCRNA_SOURCE_MSG, self.source)
     formLayout.addRow(c.LNCRNA_SOURCE_FILE_MSG, self.sourceFile)
@@ -293,11 +293,11 @@ class LncrnaForm(GuiForm):
         jobArgs = ['get_lncrna.py', '--custom-bed', os.path.normpath(self.sourceFile.text()), \
             '--organism', self.organism.currentText(), os.path.normpath(self.output)]
       else:
-        print sys.stderr, 'Error: could not read file: %s' % self.sourceFile.text()
+        print(sys.stderr, 'Error: could not read file: %s' % self.sourceFile.text())
     else:
       #convert organism from pretty print dictionary value to key needed for url.
       #ex. 'hg38': 'Human (hg38)'
-      for (key, val) in c.LNCRNA_NONCODE_ORGANISMS.iteritems():
+      for (key, val) in c.LNCRNA_NONCODE_ORGANISMS.items():
         if val == self.organism.currentText():
           orgKey = key.strip()
       jobArgs = ['get_lncrna.py', '--noncode', '--organism', orgKey, \
@@ -338,7 +338,7 @@ class ProbeForm(GuiForm):
     #options form
     formLayout = QFormLayout()
     self.organism = ComboBox()
-    self.organism.addItems(sorted([val for (key, val) in c.PROBE_ENSEMBL_ORGANISMS.iteritems()]))
+    self.organism.addItems(sorted([val for (key, val) in c.PROBE_ENSEMBL_ORGANISMS.items()]))
     self.dataDir = FileChooser(dialogType=c.DIRECTORY_OPEN_DIALOG_TYPE)
     self.output = FileChooser(dialogType=c.SAVE_DIALOG_TYPE, fileTypes=c.BED_FILE_TYPE)
     self.refreshButton = QPushButton(c.PROBE_REFRESH_BUTTON_MSG)
@@ -380,7 +380,7 @@ class ProbeForm(GuiForm):
       #clean out the default/old items
       self.organism.clear()
       #add the new
-      self.organism.addItems(sorted([val for (key, val) in self.availableOrganisms.iteritems()]))
+      self.organism.addItems(sorted([val for (key, val) in self.availableOrganisms.items()]))
       #set the index to the old one
       self.organism.setCurrentIndex(oldOrgIndex)
 
@@ -512,7 +512,7 @@ class ExpressionForm(GuiForm):
     #search form
     searchLayout = QFormLayout()
     self.organism = ComboBox()
-    self.organism.addItems(sorted([val for (key, val) in c.PROBE_ENSEMBL_ORGANISMS.iteritems()]))
+    self.organism.addItems(sorted([val for (key, val) in c.PROBE_ENSEMBL_ORGANISMS.items()]))
     self.searchTerms = QTextEdit()
     #TODO add default italicised, light grey example for search terms field
     self.searchButton = QPushButton(c.EXPRESSION_SEARCH_BUTTON_MSG)
@@ -539,12 +539,12 @@ class ExpressionForm(GuiForm):
   @Slot()
   def onSearchButton(self):
     self.jobType = GuiJob.EXPRESSION_SEARCH
-    print 'Setting up job: %s...' % GuiJob.typeNames[self.jobType]
+    print('Setting up job: %s...' % GuiJob.typeNames[self.jobType])
     self.jobArgs = self.getSearchJobArgs()
     if not self.jobArgs:
       ErrorMessageBox.show(self, c.ERROR_INVALID_JOB)
     #call a new gui job process
-    print 'Job args: %s' % (' '.join(self.jobArgs))
+    print('Job args: %s' % (' '.join(self.jobArgs)))
     self.job = GuiJob(jobArgs=self.jobArgs)
     self.job.started.connect(self.onJobStarted)
     self.job.finished.connect(self.onJobFinished)
@@ -566,7 +566,7 @@ class ExpressionForm(GuiForm):
       fileSizeSum = 0
       prettySum = 'N/A'
       infoFile = os.path.normpath('%s/%s' % (self.outDir.text(), c.EXPRESSION_DEFAULT_INFO_OUTPUT))
-      print 'infoFile opening %s ' % infoFile
+      print('infoFile opening %s ' % infoFile)
       with open(infoFile, 'rb') as f:
         reader = csv.reader(f, delimiter='\t')
         for cols in reader:
@@ -579,7 +579,7 @@ class ExpressionForm(GuiForm):
       if fileSizeSum > 0:
         prettySum = getHumanReadableSize(fileSizeSum)
       text = 'Found %s series totalling %s' % (numLines, prettySum)
-      print text
+      print(text)
       self.searchResultsMessage.setText(text)
       self.searchButton.setEnabled(False)
       self.runButton.setEnabled(True)
@@ -731,7 +731,7 @@ class ResultsForm(GuiForm):
     #i.e. from 'Human' recover key and then value from:
     # 'homo_sapiens_funcgen_85_38': 'Human (Homo sapiens v85.38)'
     probeOrganism = guiVars['probeOrganism'].lower()
-    for (funcgen, pretty) in c.PROBE_ENSEMBL_ORGANISMS.iteritems():
+    for (funcgen, pretty) in c.PROBE_ENSEMBL_ORGANISMS.items():
       if pretty.lower().find(probeOrganism) != -1:
         self.organism = funcgen
         break
@@ -763,10 +763,10 @@ class NavigationForm(QWidget):
 
   @Slot()
   def onNextButton(self):
-    print 'next clicked'
+    print('next clicked')
     pass
 
   @Slot()
   def onPrevButton(self):
-    print 'prev clicked'
+    print('prev clicked')
     pass

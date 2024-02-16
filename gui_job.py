@@ -13,7 +13,7 @@ from PySide.QtCore import *
 
 #class that starts a new process for a python job.
 class GuiJob(QObject):
-  types = (LNCRNA, PROBE, OVERLAP, EXPRESSION, EXPRESSION_SEARCH, RESULTS) = range(6)
+  types = (LNCRNA, PROBE, OVERLAP, EXPRESSION, EXPRESSION_SEARCH, RESULTS) = list(range(6))
   typeNames = ['Downloading lncRNA', 'Downloading Ensembl probe information',
       'Finding lncRNA/probe overlap', 'Downloading expression probes',
       'Searching for expression probes', 'Parsing results'
@@ -42,25 +42,25 @@ class GuiJob(QObject):
 
   #emit gui updates at certain stages of task.
   def __onStarted(self):
-    print 'Started job @ %s' % datetime.datetime.now()
+    print('Started job @ %s' % datetime.datetime.now())
     self.started.emit()
 
   def __onFinished(self):
-    print 'Finished job @ %s' % datetime.datetime.now()
+    print('Finished job @ %s' % datetime.datetime.now())
     self.finished.emit()
 
   def __onError(self):
-    print sys.stderr, 'Error running job @ %s:\n\t%s %s' % (datetime.datetime.now(),
-        self.jobProgram, self.jobArgs)
+    print(sys.stderr, 'Error running job @ %s:\n\t%s %s' % (datetime.datetime.now(),
+        self.jobProgram, self.jobArgs))
     self.error.emit()
 
   def __onReadyReadStandardOutput(self):
     output = self.process.readAllStandardOutput()
-    print '%s' % output.__str__()
+    print('%s' % output.__str__())
 
   def __onReadyReadStandardError(self):
     error = self.process.readAllStandardError()
-    print 'Error: %s' % error.__str__()
+    print('Error: %s' % error.__str__())
 
 
 ##Class to communicate between the GUI jobs and the GUI.

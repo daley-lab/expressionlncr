@@ -7,7 +7,7 @@ import os.path
 import operator
 import sys
 import shutil
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 
 #local
 import downloader
@@ -21,25 +21,25 @@ def getLncipedia(organism, version, highconf, output):
   if highconf:
     url += '_hc'
   url += '.bed'
-  print 'Getting BED file from LNCipedia @ ' + url + ' ...'
+  print('Getting BED file from LNCipedia @ ' + url + ' ...')
   downloader.simpleDownload(url, output)
 
 #gets a gzipped BED file from noncode.org and decompresses it.
 def getNoncode(organism, year, output):
   baseurl = 'http://www.noncode.org/datadownload/NONCODE' + year + '_'
   url = baseurl + organism + '.lncAndGene.bed.tgz'
-  print 'Getting BED file from NONCODE @ ' + url + ' ...'
+  print('Getting BED file from NONCODE @ ' + url + ' ...')
   zippedOutput = output + '.tgz'
   downloader.simpleDownload(url, zippedOutput)
-  print 'Unzipping %s to %s ...' % (zippedOutput, output)
+  print('Unzipping %s to %s ...' % (zippedOutput, output))
   ziptools.untargz(zippedOutput, output)
 
 def usage(defaults):
-  print 'Usage: ' + sys.argv[0] + ' [-l, --lncipedia | -n, --noncode | -c, --custom-bed <BED_INPUT>] (--high-conf) -o, --organism <ORGANISM> <BED_OUTPUT>'
-  print 'Example: ' + sys.argv[0] + ' --noncode --organism hg38 noncode_lncrnas.bed'
-  print 'Defaults:'
-  for (key, val) in sorted(defaults.iteritems(), key=operator.itemgetter(0)):
-    print '%s - %s' % (str(key), str(val))
+  print('Usage: ' + sys.argv[0] + ' [-l, --lncipedia | -n, --noncode | -c, --custom-bed <BED_INPUT>] (--high-conf) -o, --organism <ORGANISM> <BED_OUTPUT>')
+  print('Example: ' + sys.argv[0] + ' --noncode --organism hg38 noncode_lncrnas.bed')
+  print('Defaults:')
+  for (key, val) in sorted(iter(defaults.items()), key=operator.itemgetter(0)):
+    print('%s - %s' % (str(key), str(val)))
 
 def __main__():
   shortOpts = 'hlnc:o:'
@@ -55,7 +55,7 @@ def __main__():
   try:
     opts, args = getopt.getopt(sys.argv[1:], shortOpts, longOpts)
   except getopt.GetoptError as err:
-    print >> sys.stderr, str(err)
+    print(str(err), file=sys.stderr)
     usage(defaults)
     sys.exit(2)
   for opt, arg in opts:
@@ -75,7 +75,7 @@ def __main__():
       highconf = True
   if len(args) > 0:
     output = args[0]
-  print 'Called with these args: %s, %s, %s, %s, %s, %s, %s' % (mode, organism, output, highconf, version, year, bedInput)
+  print('Called with these args: %s, %s, %s, %s, %s, %s, %s' % (mode, organism, output, highconf, version, year, bedInput))
   if mode == 'lncipedia':
     getLncipedia(organism, version, highconf, output)
   elif mode == 'noncode':

@@ -6,7 +6,7 @@
 from datetime import datetime
 import sys
 import time
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 import downloader
 from ncbi_job_manager import NCBIJobManager
@@ -45,7 +45,7 @@ class NCBIJob(NCBIJobInterface):
 					uidCount += 1  #iterate through list regardless of whether element added
 				#trim off last comma, build url, and get content
 				longparam = longparam[:-1]
-				params = urllib.urlencode({
+				params = urllib.parse.urlencode({
 					'db': 'snp',
 					'id': longparam,
 					'retmax': self.retmax,
@@ -56,7 +56,7 @@ class NCBIJob(NCBIJobInterface):
 					'tool': 'ncbi_job.py'
 				})
 				url = self.baseurl + ('?%s' % params)
-				print 'Querying NCBI eSearch: ' + str(url)
+				print('Querying NCBI eSearch: ' + str(url))
 				xmlFileNumStr = '.' + str(queryCount) if queryCount > 0 else ''
 				downloader.simpleDownload(url, self.output + xmlFileNumStr)
 				queryCount += 1
@@ -76,15 +76,15 @@ def __main__():
 	job1 = NCBIJob(output='data/job1.xml', uidList=snpList1)
 	job2 = NCBIJob(output='data/job2.xml', uidList=snpList2)
 	jobStart = datetime.now()
-	print 'Start jobs @ ' + str(jobStart)
+	print('Start jobs @ ' + str(jobStart))
 	manager.runJob(job1)
 	job1Stop = datetime.now()
-	print 'End job 1 @ ' + str(job1Stop) + ' (total t=' + str(job1Stop-jobStart) + ')'
+	print('End job 1 @ ' + str(job1Stop) + ' (total t=' + str(job1Stop-jobStart) + ')')
 	manager.runJob(job2)
 	job2Stop = datetime.now()
-	print 'End job 2 @ ' + str(job2Stop) + ' (total t=' + str(job2Stop-jobStart) + ')'
+	print('End job 2 @ ' + str(job2Stop) + ' (total t=' + str(job2Stop-jobStart) + ')')
 	manager.shutdown()
-	print 'Finished testing NCBIJob'
+	print('Finished testing NCBIJob')
 	sys.exit(0)
 
 if __name__ == '__main__':

@@ -16,11 +16,11 @@ class TestJob(NCBIJobInterface):
 	
 	def run(self):
 		for uid in self.uidList:
-			print 'got item: ' + str(uid)
+			print('got item: ' + str(uid))
 			time.sleep(self.minSecondsPerJob)
 
 def __main__():
-	print 'Testing TestJob...'
+	print('Testing TestJob...')
 	manager = NCBIJobManager()
 	list1 = [
 			'mary',
@@ -34,15 +34,15 @@ def __main__():
 	job1 = TestJob(uidList=list1)
 	job2 = TestJob(uidList=list2)
 	jobStart = datetime.now()
-	print 'Start jobs @ ' + str(jobStart)
+	print('Start jobs @ ' + str(jobStart))
 	manager.runJob(job1)
 	job1Stop = datetime.now()
-	print 'End job 1 @ ' + str(job1Stop) + ' (total t=' + str(job1Stop-jobStart) + ')'
+	print('End job 1 @ ' + str(job1Stop) + ' (total t=' + str(job1Stop-jobStart) + ')')
 	manager.runJob(job2)
 	job2Stop = datetime.now()
-	print 'End job 2 @ ' + str(job2Stop) + ' (total t=' + str(job2Stop-jobStart) + ')'
+	print('End job 2 @ ' + str(job2Stop) + ' (total t=' + str(job2Stop-jobStart) + ')')
 	manager.shutdown()
-	print 'Finished testing TestJob'
+	print('Finished testing TestJob')
 
 if __name__ == '__main__':
 	__main__()

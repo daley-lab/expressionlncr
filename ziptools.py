@@ -10,7 +10,7 @@ import tarfile
 # single file archive (ignores files in TAR after first).
 def untargz(sourceFilename, outputFilename):
     with tarfile.open(sourceFilename) as zipped:
-        firstMember = zipped.next()
+        firstMember = next(zipped)
         if firstMember:
             firstFileHandle = zipped.extractfile(firstMember)
             data = firstFileHandle.read()

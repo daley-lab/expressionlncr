@@ -53,7 +53,7 @@ def searchForPlatforms(organism, title, esearchFile, esummaryFile):
 def getGplsFromEnsemblOrganismData(organism, dataDir):
   arrayChipMap = getEnsemblArraysFromFile(dataDir)
   gpls = []
-  for (id_, array) in arrayChipMap.iteritems():
+  for (id_, array) in arrayChipMap.items():
     arrayGpls = getGplsFromEnsemblArrayName(organism, array)
     #where multiple GPLs correspond to an array returned as 'GPL123,GPL234'.
     # can be split for our purposes here.

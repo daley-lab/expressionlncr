@@ -58,7 +58,7 @@ def removePrefix(idString, prefix):
 
 def printAccession(accessionType, accession):
   line = 'accn: %s, type: %s, result: %s' % (accession, accessionType, getDirFromGeoAccession(accessionType, accession))
-  print line
+  print(line)
 
 #get series ids from either input file and/or argument.
 #argument should look like: 1,2,3,4
@@ -85,7 +85,7 @@ def getSeriesIds(seriesFile=None, seriesArg=None):
           for col in cols:
             ids.append(removeGSE(col))
     except IOError:
-      print 'Warning: No series id file: %s' % seriesFile
+      print('Warning: No series id file: %s' % seriesFile)
   return ids
 
 #file format is whitespace delim rows &/ cols of GSE identifiers, numbers only

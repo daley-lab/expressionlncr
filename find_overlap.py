@@ -35,20 +35,20 @@ import constants as c
 # objects to memory
 def writeOverlap(inputA, inputB, outputA, outputB, output, chunksize):
   #remove old output files if present
-  print 'deleting file %s if present...' % outputA
+  print('deleting file %s if present...' % outputA)
   downloader.remove(outputA)
-  print 'deleting file %s if present...' % outputB
+  print('deleting file %s if present...' % outputB)
   downloader.remove(outputB)
-  print 'deleting file %s if present...' % output
+  print('deleting file %s if present...' % output)
   downloader.remove(output)
   #read in the two input files
   colNames = ['chrom', 'start', 'stop', 'name', 'value', 'strand']
   usedCols = [x for x in range(0, 6)]
-  print 'reading in file B (%s) to dataframe @ %s' % (inputB, str(datetime.datetime.now()))
+  print('reading in file B (%s) to dataframe @ %s' % (inputB, str(datetime.datetime.now())))
   with open(inputB, 'rb') as inB:
     dataB = pd.read_csv(inB, header=None, sep='\t',
         names=colNames, usecols=usedCols)
-  print 'reading in file A (%s) to dataframe @ %s' % (inputA, str(datetime.datetime.now()))
+  print('reading in file A (%s) to dataframe @ %s' % (inputA, str(datetime.datetime.now())))
   with open(inputA, 'rb') as inA:
     #get number of chunks in file first
     numChunks = 0
@@ -63,7 +63,7 @@ def writeOverlap(inputA, inputB, outputA, outputB, output, chunksize):
     chunkCount = 0
     for chunkA in readerA:
       chunkCount += 1
-      print 'finding overlap for file A chunk %s/%s... @ %s' % (chunkCount, numChunks, str(datetime.datetime.now()))
+      print('finding overlap for file A chunk %s/%s... @ %s' % (chunkCount, numChunks, str(datetime.datetime.now())))
       #group the input data by chromosome & strand and then search each chromosome 
       # & strand for overlap separately
       groupedA = chunkA.groupby(['chrom', 'strand'])
@@ -188,11 +188,11 @@ def writeOverlap(inputA, inputB, outputA, outputB, output, chunksize):
 #count up number of lines in a file
 def getNumLinesInFile(filename):
   with open(filename, 'rb') as f:
-    print 'counting number of lines in file %s @ %s' % (filename, datetime.datetime.now())
+    print('counting number of lines in file %s @ %s' % (filename, datetime.datetime.now()))
     total = 0
     for row in f:
       total += 1
-    print ' > %s lines in file %s' % (total, filename)
+    print(' > %s lines in file %s' % (total, filename))
     return total
   return -1
   #remember to reset file handle position if passing file handle
@@ -212,7 +212,7 @@ def getOverlap(inputA, inputB, swap, chunksize, chromfilter, inputSorted):
   nameCol = c.BED_DEFAULTS['nameCol']
   strandCol = c.BED_DEFAULTS['strandCol']  #last column
   ##read all lines in file b into memory. no need to read all lines in a into memory use iterable.
-  print 'counting files @ %s ...' % datetime.datetime.now()
+  print('counting files @ %s ...' % datetime.datetime.now())
   totalA = getNumLinesInFile(inputA)
   totalB = getNumLinesInFile(inputB)
   with open(inputA, 'rb') as a:
@@ -220,9 +220,9 @@ def getOverlap(inputA, inputB, swap, chunksize, chromfilter, inputSorted):
       readerA = csv.reader(a, delimiter=delim)
       readerB = csv.reader(b, delimiter=delim)
       #load file B into memory
-      print 'reading file B into memory @ time: %s ...' % datetime.datetime.now() 
+      print('reading file B into memory @ time: %s ...' % datetime.datetime.now()) 
       if chromfilter:
-        print ' > including only chromosome %s' % chromfilter
+        print(' > including only chromosome %s' % chromfilter)
       blines = {}
       try:
         for bcols in readerB:
@@ -253,15 +253,15 @@ def getOverlap(inputA, inputB, swap, chunksize, chromfilter, inputSorted):
             chromStrandLines.append(newcols)
       except ValueError as ve:
         #unfortunately no skipping of bad lines in this method. abort.
-        print 'Error: Malformed BED file - Could not convert value to integer'
+        print('Error: Malformed BED file - Could not convert value to integer')
         return overlap
       #finally loop over A file lines and compute overlap for each B line.
-      print 'computing overlap of file A w/ b @ time: %s ...' % datetime.datetime.now() 
+      print('computing overlap of file A w/ b @ time: %s ...' % datetime.datetime.now()) 
       chunkCount = 1
       numChunks = int(math.ceil(totalA/float(chunksize)))
       for chunk in arraytools.getChunks(readerA, chunksize=chunksize):
-        print 'processing file A, chunk %s/%s (matches so far: %s) @ %s ...' \
-            % (chunkCount, numChunks, matches, datetime.datetime.now())
+        print('processing file A, chunk %s/%s (matches so far: %s) @ %s ...' \
+            % (chunkCount, numChunks, matches, datetime.datetime.now()))
         chunkCount = chunkCount + 1
         for acols in chunk:
           #if acols[0][0:5] == 'track':  #to skip header line in BED file
@@ -354,13 +354,13 @@ def getOverlap(inputA, inputB, swap, chunksize, chromfilter, inputSorted):
 def createOverlapOutput(overlap, outputName, swap):
   delim = '\t'
   #ensure directories to output file are created
-  print 'creating path to file ' + outputName + ' @ time: ' + str(datetime.datetime.now())
+  print('creating path to file ' + outputName + ' @ time: ' + str(datetime.datetime.now()))
   downloader.createPathToFile(outputName)
   #delete file at output if already present. open(f, 'wb') should erase it for us but it's 
   # appending for some strange reason.
-  print 'removing ' + outputName + ' if present...'
+  print('removing ' + outputName + ' if present...')
   downloader.remove(outputName)
-  print 'start writing output time: ' + str(datetime.datetime.now())
+  print('start writing output time: ' + str(datetime.datetime.now()))
   with open(outputName, 'wb') as output:
     header = '<!DOCTYPE overlapResult>\n<overlap>\n'
     output.write(header)
@@ -368,13 +368,13 @@ def createOverlapOutput(overlap, outputName, swap):
     # regardless of swap
     parentTag = 'a'
     childTag = 'b'
-    for (key, match) in overlap.iteritems():
+    for (key, match) in overlap.items():
       par = match.parent
       startPar = '<%s>\n\t<chr>%s</chr>\n\t<start>%s</start>\n\t<stop>%s</stop>\n\t<strand>%s</strand>\n\t<name>%s</name>\n' % (
           parentTag, par.chrom, par.start, par.stop, par.strand, par.name
         )
       output.write(startPar)
-      for (name, child) in match.children.iteritems():
+      for (name, child) in match.children.items():
         childString = '\t<%s>\n\t\t<chr>%s</chr>\n\t\t<start>%s</start>\n\t\t<stop>%s</stop>\n\t\t<strand>%s</strand>\n\t\t<name>%s</name>\n\t</%s>\n' % (
             childTag, child.chrom, child.start, child.stop, child.strand, child.name, childTag
           )
@@ -383,18 +383,18 @@ def createOverlapOutput(overlap, outputName, swap):
       output.write(endPar)
     footer = '</overlap>'
     output.write(footer)
-  print 'done writing output @ time: ' + str(datetime.datetime.now())
+  print('done writing output @ time: ' + str(datetime.datetime.now()))
 
 #output BED file from ChromFeature array
 def createBedFromChromFeatures(chromFeatures, outputName, delim='\t', writeHeader=False):
   #create output directory
-  print 'creating path to file ' + outputName + ' @ time: ' + str(datetime.datetime.now())
+  print('creating path to file ' + outputName + ' @ time: ' + str(datetime.datetime.now()))
   downloader.createPathToFile(outputName)
   #and remove output file if already present
-  print 'removing ' + outputName + ' if present...'
+  print('removing ' + outputName + ' if present...')
   downloader.remove(outputName)
   #write out the file
-  print 'start writing features file @ time: ' + str(datetime.datetime.now())
+  print('start writing features file @ time: ' + str(datetime.datetime.now()))
   with open(outputName, 'wb') as output:
     if writeHeader:
       header = '#Chromosome%sStart%sStop%sName%sScore%sStrand\n' % \
@@ -405,29 +405,29 @@ def createBedFromChromFeatures(chromFeatures, outputName, delim='\t', writeHeade
           f.chrom, delim, f.start, delim, f.stop, delim, f.name, delim, delim, f.strand
       )
       output.write(line)
-  print 'done writing features file @ time: ' + str(datetime.datetime.now())
+  print('done writing features file @ time: ' + str(datetime.datetime.now()))
 
 def usage(defaults):
-  print 'Usage: ' + sys.argv[0] + \
+  print('Usage: ' + sys.argv[0] + \
       ' -a, --input-a <BED_INPUT_A> -b, --input-b <BED_INPUT_B> -A,' + \
       ' --output-a <OVERLAP_A_OUTPUT> -B, --output-b <OVERLAP_B_OUTPUT>' + \
       ' -d, --input-sorted ' + \
-      ' -c, --chr <CHROMOSOME> -s, --swap <XML_OUTPUT>\n'
-  print 'Example: ' + sys.argv[0] + \
-      ' -a data/ensembl_probe_features.bed -b data/noncode_lncrnas.bed data/overlap.xml\n'
-  print 'Defaults:'
-  for key, val in sorted(defaults.iteritems(), key=operator.itemgetter(0)):
-    print str(key) + ' - ' + str(val)
-  print '\nOptions:\n'
-  print '-s, --swap\n\tSwap the XML hierarchy of the output overlap XML file. ' + \
-    'Default, unswapped, is elements like <B><A></A></B>.\n'
-  print '-d, --input-sorted\n\tSpecify that input B file is sorted by chromosome, ' + \
+      ' -c, --chr <CHROMOSOME> -s, --swap <XML_OUTPUT>\n')
+  print('Example: ' + sys.argv[0] + \
+      ' -a data/ensembl_probe_features.bed -b data/noncode_lncrnas.bed data/overlap.xml\n')
+  print('Defaults:')
+  for key, val in sorted(iter(defaults.items()), key=operator.itemgetter(0)):
+    print(str(key) + ' - ' + str(val))
+  print('\nOptions:\n')
+  print('-s, --swap\n\tSwap the XML hierarchy of the output overlap XML file. ' + \
+    'Default, unswapped, is elements like <B><A></A></B>.\n')
+  print('-d, --input-sorted\n\tSpecify that input B file is sorted by chromosome, ' + \
     'then start position. Program will assuming sorting to speed up algorithm. ' + \
     'Can be done using: sort -k1,1 -k2,2n <INPUT> > <OUTPUT>. ' + \
-    'Defaults to unsorted.\n'
-  print 'IMPORTANT:'
-  print '-There *must* be enough system memory to load file B into memory'
-  print '-This implies you should specify the larger file as file A\n'
+    'Defaults to unsorted.\n')
+  print('IMPORTANT:')
+  print('-There *must* be enough system memory to load file B into memory')
+  print('-This implies you should specify the larger file as file A\n')
 
 def __main__():
   shortOpts = 'ha:b:A:B:o:c:z:sdp'
@@ -448,7 +448,7 @@ def __main__():
   try:
     opts, args = getopt.getopt(sys.argv[1:], shortOpts, longOpts)
   except getopt.GetoptError as err:
-    print str(err)
+    print(str(err))
     usage(defaults)
     sys.exit(2)
   for opt, arg in opts:
@@ -478,34 +478,34 @@ def __main__():
   if len(args) > 0 and output == defaults['output']:
     #only assume first argument is output if user didn't specify an --output arg
     output = args[0]
-  print 'getting overlap b/w BED files @ time: ' + str(datetime.datetime.now())
+  print('getting overlap b/w BED files @ time: ' + str(datetime.datetime.now()))
   if pandasPipeline:
     import pandas as pd
     import numpy as np
-    print 'using pandas pipeline'
+    print('using pandas pipeline')
     #a non-object oriented pipeline in pandas. unfortunately, much slower atm.
     writeOverlap(inputA, inputB, outputA, outputB, output, chunksize)
   else:
     #pipeline
     overlap = getOverlap(inputA, inputB, swap, chunksize, chromosome, inputSorted)
-    print 'found %s elements in file A with matches in file B' % len(overlap.keys())
-    print 'creating overlap output file @ time: ' + str(datetime.datetime.now())
+    print('found %s elements in file A with matches in file B' % len(list(overlap.keys())))
+    print('creating overlap output file @ time: ' + str(datetime.datetime.now()))
     createOverlapOutput(overlap, output, swap)
-    print 'creating chrom feature A output file @ time: ' + str(datetime.datetime.now())
+    print('creating chrom feature A output file @ time: ' + str(datetime.datetime.now()))
     #if swap:
     # -parent features are of element A
     # -child features are of element B
     #else:
     # -the reverse
-    parentFeatures = [match.parent for (key, match) in overlap.iteritems()]
+    parentFeatures = [match.parent for (key, match) in overlap.items()]
     createBedFromChromFeatures(parentFeatures, outputA if swap else outputB)
-    print 'creating chrom feature B output file @ time: ' + str(datetime.datetime.now())
+    print('creating chrom feature B output file @ time: ' + str(datetime.datetime.now()))
     childFeatures = []
-    for (key, match) in overlap.iteritems():
-      for (name, child) in match.children.iteritems():
+    for (key, match) in overlap.items():
+      for (name, child) in match.children.items():
         childFeatures.append(child)
     createBedFromChromFeatures(childFeatures, outputB if swap else outputA)
-    print 'done ' + sys.argv[0] + ' @ time: ' + str(datetime.datetime.now())
+    print('done ' + sys.argv[0] + ' @ time: ' + str(datetime.datetime.now()))
 
 if __name__ == '__main__':
   __main__()
