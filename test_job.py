@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # Example job to test the NCBI job manager
 
 from datetime import datetime
@@ -6,6 +6,7 @@ import time
 
 from ncbi_job_manager import NCBIJobManager
 from ncbi_job_interface import NCBIJobInterface
+
 
 class TestJob(NCBIJobInterface):
 	uidList = []

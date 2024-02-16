@@ -64,7 +64,6 @@ ORG_TO_ARRAY_TO_GPL = {
     'LEIDEN2': '',
     'LEIDEN': '',
     'MattArray': '',
-    'MattArray': ''
   },
 
   'drosophila_melanogaster_funcgen': {

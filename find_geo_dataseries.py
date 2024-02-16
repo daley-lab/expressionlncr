@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 #
 # script to grab NCBI GEO data series from FTP server given search parameters.
 # IDs and sizes of the series NOT the data itself is retrieved.
@@ -16,15 +16,14 @@
 #   > series matrix file size
 #   > aggregate file count and size
 
-
 import csv
 import datetime
 import getopt
 import operator
-import os
-import re
 import sys
-import urllib.request, urllib.error, urllib.parse
+import urllib.request
+import urllib.error
+import urllib.parse
 
 #local
 import downloader
@@ -42,7 +41,7 @@ def getArraysFromProbeOverlapBed(probeOverlapFile):
   delim = '\t'
   nameCol = 3
   try:
-    with open(probeOverlapFile, 'rb') as pof:
+    with open(probeOverlapFile, 'r') as pof:
       reader = csv.reader(pof, delimiter=delim)
       for cols in reader:
         try:
@@ -50,7 +49,7 @@ def getArraysFromProbeOverlapBed(probeOverlapFile):
             name = cols[nameCol]
             array = name.strip().split('/')[0]
             arrays.add(array)
-        except:
+        except Exception:
           pass
   except Exception as e:
     print(e, file=sys.stderr)
@@ -103,7 +102,7 @@ def searchForSeriesInPlatforms(organism, platforms, searchTerms, esearchFile, es
     keywordIndex = splat.index(keyword)
     #make the searchable organism out of the words before the keyword
     searchableOrg = ' '.join(splat[:keywordIndex])
-  except Exception as e:
+  except Exception:
     searchableOrg = organism
   #now construct the search term
   database = 'gds'
@@ -227,7 +226,7 @@ def __main__():
   #write out the series ids to file for use in the next pipeline step.
   print('Creating series ids file %s @ %s ...' % (seriesOutput, str(datetime.datetime.now())))
   downloader.createPathToFile(seriesOutput)
-  with open(seriesOutput, 'wb') as seriesFile:
+  with open(seriesOutput, 'w') as seriesFile:
     #sort as integer since seriesIds are always integers
     for series in sorted(seriesIds, key=lambda x: int(x)):
       line = '%s\n' % series
@@ -241,7 +240,7 @@ def __main__():
     info = getSeriesMatrixFileInfo(seriesIds, ftp)
     print('Creating series matrix info file: %s @ %s ...' % (infoOutput, str(datetime.datetime.now())))
     downloader.createPathToFile(infoOutput)
-    with open(infoOutput, 'wb') as infoFile:
+    with open(infoOutput, 'w') as infoFile:
       for (key, val) in sorted(info.items()):
         line = '%s\t%s\n' % (key, val)
         infoFile.write(line)

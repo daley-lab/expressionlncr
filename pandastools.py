@@ -1,8 +1,7 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # Convenience functions for working with pandas.
 #
 
-import numpy as np
 import pandas as pd
 
 

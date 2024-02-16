@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # Grabs bulk download of Ensembl Funcgen database flat files for an organism 
 # and searches for probe features (matched probe locations against reference genome).
 # This method limits us to the platforms in Ensembl but eliminates the 
@@ -13,13 +13,10 @@
 import csv
 import datetime
 import getopt
-import itertools
-import numpy as np
 import operator
 import os
 import re
 import sys
-import shutil
 
 #local
 import arraytools
@@ -67,7 +64,7 @@ def getCoordSystemId(coordSystemFile, schemaBuild, forceCurrentSchema):
   isCurrentCol = 8
   delim = '\t'
   #note that version can be null therefore need to split on only single tab
-  with open(coordSystemFile, 'rb') as csf:
+  with open(coordSystemFile, 'r') as csf:
     reader = csv.reader(csf, delimiter=delim)
     for cols in reader:
       coordSystemId = cols[coordSystemIdCol]
@@ -95,14 +92,14 @@ def getExpressionArrays(arrayFile, arrayChipFile):
   #array_chip.txt file:
   arrayChipFileFormat = {'arrayChipIdCol': 0, 'arrayIdCol': 2}
   #build map of array_id to array_chip_id
-  with open(arrayChipFile, 'rb') as acf:
+  with open(arrayChipFile, 'r') as acf:
     arrayChipReader = csv.reader(acf, delimiter=delim)
     for arrayChipCols in arrayChipReader:
       arrayChipId = arrayChipCols[arrayChipFileFormat['arrayChipIdCol']]
       arrayId = arrayChipCols[arrayChipFileFormat['arrayIdCol']]
       arrayIdToChipId[arrayId] = arrayChipId
   #get the array chip id for each array that is format "EXPRESSION"
-  with open(arrayFile, 'rb') as af:
+  with open(arrayFile, 'r') as af:
     arrayReader = csv.reader(af, delimiter=delim)
     for arrayCols in arrayReader:
       if arrayCols[arrayFileFormat['formatCol']] == 'EXPRESSION':
@@ -134,28 +131,28 @@ def getExpressionProbes(probeFile, probeSetFile, expressionArrayChipIds,
   probeSetProbeSetIdCol = 0
   probeSetProbeSetNameCol = 1
   print('get probes - probeset file @ %s' % datetime.datetime.now())
-  with open(probeSetFile, 'rb') as psf:
+  with open(probeSetFile, 'r') as psf:
     probeSetReader = csv.reader(psf, delimiter=delim)
     for chunk in arraytools.getChunks(probeSetReader, chunksize=chunksize):
-      for l in chunk:
-        probeSets[l[probeSetProbeSetIdCol]] = l[probeSetProbeSetNameCol]
+      for psr in chunk:
+        probeSets[psr[probeSetProbeSetIdCol]] = psr[probeSetProbeSetNameCol]
   print('get probes - probe file @ %s' % datetime.datetime.now())
-  with open(probeFile, 'rb') as pf:
+  with open(probeFile, 'r') as pf:
     probeReader = csv.reader(pf, delimiter=delim)
     for chunk in arraytools.getChunks(probeReader, chunksize=chunksize):
-      for l in chunk:
+      for pr in chunk:
         #only store the probe if it corresponds to a probe expression array (and not a methylation array for ex.)
-        arrayChipId = l[arrayChipIdCol]
+        arrayChipId = pr[arrayChipIdCol]
         if arrayChipId in expressionArrayChipIds:
-          probeId = l[probeIdCol]
+          probeId = pr[probeIdCol]
           probe = None
           if not keysOnly:
-            probeSetId = l[probeSetIdCol]
+            probeSetId = pr[probeSetIdCol]
             if probeSetId != nullChar and probeSetId != '' and probeSetId in probeSets:
               probeSetName = probeSets[probeSetId]
             else:
               probeSetName = None
-            probeName = l[nameCol]
+            probeName = pr[nameCol]
             arrayName = expressionArrayChipIds[arrayChipId]
             probe = beans.Probe(probeId, probeSetName, probeName, arrayChipId, arrayName)
           expressionProbes[probeId] = probe
@@ -167,6 +164,7 @@ def getExpressionProbes(probeFile, probeSetFile, expressionArrayChipIds,
 # probeSetId, probeSetName, probeId, probeName, arrayChipId
 def getExpressionProbeDataFrame(probeFile, probeSetFile, expressionArrayChipIds,
       keysOnly=False):
+  import pandas as pd
   print('Start get probes @ %s' % datetime.datetime.now())
   #pidgeon-hole the expressionArrayChipIds dictionary of chip id -> chip name
   # into a dataframe object. could go back and re-write function creating the dict.
@@ -244,7 +242,7 @@ def getSequenceRegionIds(seqRegionFile, coordSystemId, schemaBuild):
   coordSystemIdCol = 2
   schemaBuildCol = 4
   delim = '\t'
-  with open(seqRegionFile, 'rb') as f:
+  with open(seqRegionFile, 'r') as f:
     reader = csv.reader(f, delimiter=delim)
     for cols in reader:
       seqRegionId = cols[seqRegionIdCol]
@@ -268,39 +266,39 @@ def getSequenceRegionIds(seqRegionFile, coordSystemId, schemaBuild):
 def createBedFile(probeFeatureFile, seqRegionIdMap, expressionProbes, 
     outputFile, organism, chunksize):
   delim = '\t'
-  probeFeatureIdCol = 0
+  #probeFeatureIdCol = 0
   seqRegionIdCol = 1
   seqRegionStartCol = 2
   seqRegionEndCol = 3
   seqRegionStrandCol = 4
   probeIdCol = 5
-  analysisIdCol = 6
-  mismatchesCol = 7
-  cigarLineCol = 8
-  PROBE_SET_NAME = 0
-  PROBE_NAME = 1
-  ARRAY_CHIP_ID = 2
-  ARRAY_NAME = 3
+  #analysisIdCol = 6
+  #mismatchesCol = 7
+  #cigarLineCol = 8
+  #PROBE_SET_NAME = 0
+  #PROBE_NAME = 1
+  #ARRAY_CHIP_ID = 2
+  #ARRAY_NAME = 3
   print('create bed - # seq region keys: ' + str(len(list(seqRegionIdMap.keys()))))
   print('create bed - # expression probes: ' + str(len(expressionProbes)))
   #ensure directories to output file are created
   print('create bed - creating path to ' + outputFile + '...')
   downloader.createPathToFile(outputFile)
-  #delete file at output if already present. open(f, 'wb') should erase it for us but it's 
+  #delete file at output if already present. open(f, 'w') should erase it for us but it's 
   # appending for some strange reason.
   print('create bed - removing ' + outputFile + ' if present...')
   downloader.remove(outputFile)
   #output: chrom, chromStart, chromEnd, name, score (0), strand.
   print('create bed - using probe feature file %s' % probeFeatureFile)
   print('create bed - start writing output...')
-  with open(outputFile, 'wb') as output:
-    header = 'track name=probeFeatures ' + \
-        'description="Ensembl microarray probe features from database ' + \
-        organism + '" useScore=0\n'
-    with open(probeFeatureFile, 'rb') as pff:
+  with open(outputFile, 'w') as output:
+    #header = 'track name=probeFeatures ' + \
+    #    'description="Ensembl microarray probe features from database ' + \
+    #    organism + '" useScore=0\n'
+    with open(probeFeatureFile, 'r') as pff:
       probeFeatureReader = csv.reader(pff, delimiter=delim)
         #TODO add header back in and later logic dealing with it
-  #    output.write(header)
+      #output.write(header)
       for chunk in arraytools.getChunks(probeFeatureReader, chunksize):
         for cols in chunk:
           try:
@@ -327,7 +325,7 @@ def createBedFile(probeFeatureFile, seqRegionIdMap, expressionProbes,
                 '+' if (cols[seqRegionStrandCol] == '1') else '-'
               )
             output.write(line)
-          except KeyError as ke:
+          except KeyError:
             #this wasn't a probe feature with a relevant probe
             continue
   print('create bed - done writing output @ time: ' + str(datetime.datetime.now()))
@@ -335,6 +333,7 @@ def createBedFile(probeFeatureFile, seqRegionIdMap, expressionProbes,
 #@input dataframe row with probe array, probe set, probe name
 #@return probe description formatted for a bed file
 def getProbeDesc(row):
+  import numpy as np
   #for probes with a probe set name, format their id column in the BED file as 
   # array/probe_set:probe else use array/probe
   if (row['probeSetName'] and row['probeSetName'] != 'NaN' and row['probeSetName'] != np.nan):
@@ -357,21 +356,22 @@ def getStrandSymbol(row):
 # data frame of all relevant expression probes.
 def createBedFileFromDataFrame(probeFeatureFile, seqRegionIdMap, expressionProbeFrame, 
     outputFile, organism):
+  import pandas as pd
   #some constants defining the files
   delim = '\t'
-  probeFeatureIdCol = 0
-  seqRegionIdCol = 1
-  seqRegionStartCol = 2
-  seqRegionEndCol = 3
-  seqRegionStrandCol = 4
-  probeIdCol = 5
-  analysisIdCol = 6
-  mismatchesCol = 7
-  cigarLineCol = 8
-  PROBE_SET_NAME = 0
-  PROBE_NAME = 1
-  ARRAY_CHIP_ID = 2
-  ARRAY_NAME = 3
+  #probeFeatureIdCol = 0
+  #seqRegionIdCol = 1
+  #seqRegionStartCol = 2
+  #seqRegionEndCol = 3
+  #seqRegionStrandCol = 4
+  #probeIdCol = 5
+  #analysisIdCol = 6
+  #mismatchesCol = 7
+  #cigarLineCol = 8
+  #PROBE_SET_NAME = 0
+  #PROBE_NAME = 1
+  #ARRAY_CHIP_ID = 2
+  #ARRAY_NAME = 3
   probeFeatureCols = [1, 2, 3, 4, 5]
   probeFeatureColNames = ['seqRegionId', 'seqRegionStart', 'seqRegionEnd',
       'seqRegionStrand', 'probeId']
@@ -381,7 +381,7 @@ def createBedFileFromDataFrame(probeFeatureFile, seqRegionIdMap, expressionProbe
   #ensure directories to output file are created
   print('create bed - creating path to ' + outputFile + '...')
   downloader.createPathToFile(outputFile)
-  #delete file at output if already present. open(f, 'wb') should erase it for us but it's 
+  #delete file at output if already present. open(f, 'w') should erase it for us but it's 
   # appending for some strange reason.
   print('create bed - removing ' + outputFile + ' if present...')
   downloader.remove(outputFile)
@@ -528,7 +528,7 @@ def __main__():
     if os.path.isfile(availableOrganismsFileName):
       #retrieve from file
       availableOrganisms = []
-      with open(availableOrganismsFileName, 'rb') as orgFile:
+      with open(availableOrganismsFileName, 'r') as orgFile:
         for line in orgFile:
           availableOrganisms.append(line.strip())
     else:
@@ -590,7 +590,6 @@ def __main__():
     createBedFile(funcgenFiles['probe_feature'], seqRegionIdMap, expressionProbes,
         output, organism, chunksize)
   else:
-    import pandas as pd
     createBedFileFromDataFrame(funcgenFiles['probe_feature'], seqRegionIdMap, expressionProbeFrame,
         output, organism)
   print('Done get_ensembl_probes @ time: ' + str(datetime.datetime.now()))

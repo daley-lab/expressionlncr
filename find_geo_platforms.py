@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 #
 # find NCBI GEO platforms, specifically platform accession numbers (GPLXXX)
 # from Ensembl Funcgen database array_chip.txt and array.txt flat files which contain
@@ -16,6 +16,7 @@
 #local
 import get_ensembl_probes
 import org_array_gpl
+import ncbitools
 
 
 def getEnsemblArraysFromFile(dataDir):
@@ -43,9 +44,9 @@ def searchForPlatforms(organism, title, esearchFile, esummaryFile):
   filterType = 'title'
   filterValue = '[HG-U133A]'  #TODO dynamic. here as an example only.
   terms = '%s[organism]+AND+%s[entry type]+AND+%s[title]' % (organism, entryType, title)
-  seriesIds = ncbitools.getAccessionsFromSearch(database, accessionType, \
+  ids = ncbitools.getAccessionsFromSearch(database, accessionType, \
       terms, esearchFile, esummaryFile, filterType, filterValue)
-  return platformIds
+  return ids
 
 #organism - the ensembl funcgen organism name like homo_sapiens_funcgen_84_38
 #dataDir - the directory with the downloaded Ensembl funcgen files, particularly array.txt.gz
@@ -82,7 +83,7 @@ def getGplsFromEnsemblArrayName(organism, array):
     if not gplString or gplString == '':
       raise
     gpls = gplString.split(',')
-  except:
+  except Exception:
     #print 'Warning: no GPLs found for organism %s, array %s' % (organismKey, array)
     #exit gracefully and don't print any warning. many arrays currently 
     # don't have any GPL in the manually curated map.

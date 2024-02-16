@@ -1,7 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # functions for working with arrays
 #
-
 
 import itertools
 import sys

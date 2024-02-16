@@ -1,11 +1,11 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 #
 #functions related to working with NCBI GEO FTP server
 #
 
 
 import csv
-from sets import Set
+import re
 import sys
 
 
@@ -78,7 +78,7 @@ def getSeriesIds(seriesFile=None, seriesArg=None):
         ids.append(col)
   if seriesFile:
     try:
-      with open(seriesFile, 'rb') as s:
+      with open(seriesFile, 'r') as s:
         #parse all ids in each line delimited by tabs, and all lines
         reader = csv.reader(s, delimiter='\t')
         for cols in reader:
@@ -90,8 +90,8 @@ def getSeriesIds(seriesFile=None, seriesArg=None):
 
 #file format is whitespace delim rows &/ cols of GSE identifiers, numbers only
 def parseSeriesIdFile(seriesFileName):
-  seriesSet = Set()
-  with open(seriesFileName, 'rb') as seriesFile:
+  seriesSet = set()
+  with open(seriesFileName, 'r') as seriesFile:
     for line in seriesFile:
       cols = line.strip().split()
       for series in cols:

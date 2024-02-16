@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 #
 # Script to parse expression at probes
 #  given a folder of gzipped GEO data series matrix files.
@@ -49,15 +49,12 @@
 # ...
 #
 
-
 import csv
 import datetime
 import getopt
 import gzip
 import operator
 import os
-import re
-from sets import Set
 import sys
 import xml.etree.cElementTree as cet
 
@@ -70,8 +67,8 @@ import find_geo_platforms as plat
 
 #one file per line
 def parseFileNames(completedFilesFile):
-  fileNames = Set()
-  with open(completedFilesFile, 'rb') as f:
+  fileNames = set()
+  with open(completedFilesFile, 'r') as f:
     for line in f:
       fileNames.add(line.strip())
   return fileNames
@@ -87,8 +84,9 @@ def parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFiles
   print('Reading in data series matrix files @ %s/GSE*_series_matrix.txt.gz ...' % dataDir)
   #make sure data dir exists
   if not os.path.exists(dataDir):
-    print('No data directory at: %s' % dataDir, file=sys.stderr)
-    raise err
+    err = 'No data directory at: %s' % dataDir
+    print(err, file=sys.stderr)
+    raise Exception()
   #create output dir if doesn't exist already
   downloader.createPathToFile(outDir + '/')
   #create sub dir for output of expressed lncrnas files for each GEO series
@@ -104,18 +102,18 @@ def parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFiles
                       os.path.basename(f).lower().startswith('gse')
                     )]
   #check which series have already been parsed
-  completedFiles = Set()
+  completedFiles = set()
   try:
     completedFiles = parseFileNames(completedFilesFile)
-  except IOError as ioe:
+  except IOError:
     #no existing file, create
     print('No completed files file %s, creating ...' % completedFilesFile)
-    with open(completedFilesFile, 'wb') as cff:
+    with open(completedFilesFile, 'w') as cff:
       cff.write('')
   if len(completedFiles) > 0:
     print('Skipping parsing for following files (already complete): %s ...' % (','.join(completedFiles)))
   #parse all files that haven't been already
-  filesToParse = Set(matrixFileNames).difference(completedFiles)
+  filesToParse = set(matrixFileNames).difference(completedFiles)
   with open(completedFilesFile, 'ab') as completeFile:
     count = 0
     numFiles = len(filesToParse)
@@ -126,7 +124,7 @@ def parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFiles
       print(' > parsing file (%s/%s): %s @ %s' % (count, numFiles, fileName, str(datetime.datetime.now())))
       try:
         #create map of GPL -> probeSet -> probeName -> list(tuple(max probe val among samples, GSE))
-        with gzip.open(fileName, 'rb') as matrixFile:
+        with gzip.open(fileName, 'r') as matrixFile:
           expressionMap = parseSeriesDataMatrix(matrixFile)
         #write lncrna expression to file
         lncrnaExpressionMap = getLncrnaExpressionMap(overlapMap, expressionMap, organism)
@@ -149,7 +147,7 @@ def parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFiles
     noExpressionDataLncrnasFile = '%s/noexpressiondata.lncrnas.txt' % outDir
     print('> No expression data lncRNAs file: %s ... @ %s' % ( \
         noExpressionDataLncrnasFile, str(datetime.datetime.now())))
-    with open(noExpressionDataLncrnasFile, 'wb') as nedlf:
+    with open(noExpressionDataLncrnasFile, 'w') as nedlf:
       noDataList = []
       for (lncrnaName, lncrnaProbeList) in overlapMap.items():
         if lncrnaName.upper() not in expressedLncrnas:
@@ -183,7 +181,7 @@ def parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFiles
     nonOverlappingLncrnasFile = '%s/nonoverlapping.lncrnas.txt' % outDir
     print('> Non-overlapping lncRNAs file: %s ... @ %s' % ( \
         noExpressionDataLncrnasFile, str(datetime.datetime.now())))
-    with open(nonOverlappingLncrnasFile, 'wb') as nolf:
+    with open(nonOverlappingLncrnasFile, 'w') as nolf:
       header = '#lncRNAs from lncRNA source not overlapping Ensembl probe(s)\n'
       nolf.write(header)
       for lncrna in sorted(nonOverlappingLncrnas):
@@ -243,7 +241,7 @@ def getLncrnaExpressionMap(overlapMap, expressionMap, organism):
                 maxVal=maxVal
               )
               lncrnaExpressionMap[lncrna].append(probeExpression)
-          except KeyError as ke:
+          except KeyError:
             #print 'Found no probe data for: gpl %s, probeSet %s, probeName %s' % (gpl, probeSet, probeName)
             continue
   return lncrnaExpressionMap
@@ -257,7 +255,7 @@ def getLncrnaExpressionMap(overlapMap, expressionMap, organism):
 def writeExpressedLncrnas(lncrnaExpressionMap, expressedLncrnasFile):
   #create output file of lncrnas with expressed values and zero expression
   try:
-    with open(expressedLncrnasFile, 'wb') as elf:
+    with open(expressedLncrnasFile, 'w') as elf:
       #for each set of probe expressions for a lncrna find out if any are expression > 0.
       #write out to appropriate output file.
       #note: lncrna is a ChromFeature bean
@@ -336,7 +334,7 @@ def mergeExpressedLncrnaFiles(dataDir, outputFile):
     print(' > merging file (%s/%s): %s @ %s' % (count, numFiles, fileName, str(datetime.datetime.now())))
     count += 1
     fileExpressionMap = {}
-    with open(fileName, 'rb') as f:
+    with open(fileName, 'r') as f:
       reader = csv.reader(f, delimiter='\t')
       for cols in reader:
         lncrna = cols[0].upper()
@@ -356,7 +354,7 @@ def mergeExpressedLncrnaFiles(dataDir, outputFile):
         #add new
         lncrnaExpressionMap[lncrna] = fileExpressionMap[lncrna]
   #write out the final expresssed lncrnas file
-  with open(outputFile, 'wb') as out:
+  with open(outputFile, 'w') as out:
     #write the file header
     out.write(header)
     #write out the expression map
@@ -402,11 +400,11 @@ def parseSeriesDataMatrix(matrixFile):
       #initialise keys as necessary.
       try:
         expressionMap[gpl]
-      except KeyError as ke:
+      except KeyError:
         expressionMap[gpl] = {}
       try:
         expressionMap[gpl][probeSet]
-      except KeyError as ke:
+      except KeyError:
         expressionMap[gpl][probeSet] = {}
       try:
         #add to probe's list of tuple(gse, maxval)
@@ -415,7 +413,7 @@ def parseSeriesDataMatrix(matrixFile):
           probeSeriesMaxVals = []
         probeSeriesMaxVals.append((gse, maxVal))
         expressionMap[gpl][probeSet][probeName] = probeSeriesMaxVals
-      except KeyError as ke:
+      except KeyError:
         expressionMap[gpl][probeSet][probeName] = [(gse, maxVal)]
     if readTableHeader:
       #ignore the header line for now. queue up read table row on next row.
@@ -425,7 +423,7 @@ def parseSeriesDataMatrix(matrixFile):
       #double-check that we got both the gse and gpl which are to be keys 
       # for probe expression map
       if not gse or not gpl:
-        print('Malformed series data matrix file: %s' % fileName, file=sys.stderr)
+        print('Malformed series data matrix file: %s' % matrixFile, file=sys.stderr)
         break
       readTableHeader = True
       continue
@@ -439,7 +437,7 @@ def parseSeriesDataMatrix(matrixFile):
 # note XML maps a -> children b. reverse makes overlapMap of b -> a.
 def parseOverlapFile(overlapFile, reverse=False):
   print('Parsing overlap file %s @ %s ...' % (overlapFile, str(datetime.datetime.now())))
-  xml = open(overlapFile, 'rb')
+  xml = open(overlapFile, 'r')
   tree = cet.parse(xml)
   root = tree.getroot()
   overlapMap = {}
@@ -462,7 +460,7 @@ def parseOverlapFile(overlapFile, reverse=False):
         continue
       try:
         feats = overlapMap[keyfeat.name]
-      except KeyError as ke:
+      except KeyError:
         #no entry yet for key so initialise
         overlapMap[keyfeat.name] = [keyfeat]
         feats = overlapMap[keyfeat.name]
@@ -487,13 +485,13 @@ def parseLncrnasFromBed(lncrnaFile):
   delim = c.BED_DEFAULTS['delim']
   nameCol = c.BED_DEFAULTS['nameCol']
   try:
-    with open(lncrnaFile, 'rb') as lf:
+    with open(lncrnaFile, 'r') as lf:
       reader = csv.reader(lf, delimiter=delim)
       lncrnaList = []
       for cols in reader:
         lncrna = cols[nameCol]
         lncrnaList.append(lncrna)
-  except Exception as err:
+  except Exception:
     print('Error parsing file %s for lncRNAs. Output file of lncRNAs not found to ooverlap with probes will be missing!' % lncrnaFile, file=sys.stderr)
   return lncrnaList
 

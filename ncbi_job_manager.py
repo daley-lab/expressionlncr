@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # A job manager for submitting NCBI Entrez e-utils jobs to ensure no more than 
 # X job threads is submitted every T seconds.
 # Only 1 job manager instance should be created at a time.

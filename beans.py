@@ -1,6 +1,5 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Some complex data types for the scripts
-
 
 import sys
 

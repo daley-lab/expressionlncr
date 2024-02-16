@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 #
 # script to grab NCBI GEO data series matrix files from FTP server 
 # given the GEO data series IDs.
@@ -12,15 +12,14 @@
 # ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE10nnn/GSE10000/matrix/GSE10000-GPL8321_series_matrix.txt.gz
 
 
-import csv
 import datetime
 import getopt
 import operator
 import os
-import re
-from sets import Set
 import sys
-import urllib.request, urllib.error, urllib.parse
+import urllib.request
+import urllib.error
+import urllib.parse
 
 #local
 import downloader
@@ -52,28 +51,28 @@ def downloadSeriesMatrixFiles(seriesIds, outputDir, ftp, skippedSeriesFile, comp
   print('Downloading series matrix files to: %s ...' % outputDir)
   print('Started downloads @ %s' % str(datetime.datetime.now()))
   #check which series passed have already been downloaded
-  completedSeries = Set()
+  completedSeries = set()
   try:
     completedSeries = geotools.parseSeriesIdFile(completedSeriesFile)
-  except IOError as ioe:
+  except IOError:
     #no existing file, create
     print('No completed series file %s, creating ...' % completedSeriesFile)
-    with open(completedSeriesFile, 'wb') as csf:
+    with open(completedSeriesFile, 'w') as csf:
       csf.write('')
   if len(completedSeries) > 0:
     print('Skipping downloads for following series (already complete): %s ...' % (','.join(completedSeries)))
   #check which series have already been skipped. read into a set so we don't write
   # multiple of the same series to the skipped file if the download is resumed.
-  skippedSeries = Set()
+  skippedSeries = set()
   try:
     skippedSeries = geotools.parseSeriesIdFile(skippedSeriesFile)
-  except IOError as ioe:
+  except IOError:
     #no existing file, create
     print('No skipped series file %s, creating ...' % skippedSeriesFile)
-    with open(skippedSeriesFile, 'wb') as ssf:
+    with open(skippedSeriesFile, 'w') as ssf:
       ssf.write('')
   #download all matrix files for series that haven't been downloaded already
-  seriesToDownload = Set(seriesIds).difference(completedSeries)
+  seriesToDownload = set(seriesIds).difference(completedSeries)
   with open(completedSeriesFile, 'ab') as completeFile:
     with open(skippedSeriesFile, 'ab') as skipFile:
       count = 0

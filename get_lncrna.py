@@ -1,13 +1,10 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # Grabs lncRNA BED file annotated with chrloc etc. from an online datasource.
 
 import getopt
-import gzip
-import os.path
 import operator
 import sys
 import shutil
-import urllib.request, urllib.error, urllib.parse
 
 #local
 import downloader

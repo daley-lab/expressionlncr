@@ -1,13 +1,14 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # wraps urllib2 functions with a user agent spoof to circumvent anti-crawling behaviour
 # of some sites.
-
 
 import errno
 import re
 import os
 import sys
-import urllib.request, urllib.error, urllib.parse
+import urllib.request
+import urllib.error
+import urllib.parse
 
 
 #pass in url to file to download, and the output (optionally including directories 
@@ -22,7 +23,7 @@ def simpleDownload(url, output):
   #create any missing directories in the output path
   createPathToFile(output)
   #write the file to dirname
-  with open(output, 'wb') as f:
+  with open(output, 'w') as f:
     f.write(data)
 
 #pass in a file and create the missing directories to the file if any.
@@ -49,11 +50,12 @@ def remove(removefile):
 
 #returns content instead of writing to a file
 def getUrl(url):
-  user_agent = 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:44.0) Gecko/20100101 Firefox/44.0'
-  headers={'User-Agent': user_agent} 
+  #user_agent = 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:44.0) Gecko/20100101 Firefox/44.0'
+  #headers={'User-Agent': user_agent} 
+  headers = {}
   request = urllib.request.Request(url, None, headers)
   response = urllib.request.urlopen(request)
-  data = response.read()
+  data = response.read().decode('utf-8')
   return data
 
 #returns list of files and file sizes for a folder specified by the url.
@@ -73,7 +75,7 @@ def getFolderInfo(url):
       #split the line contents by whitespace.
       cols = re.split('\s+', line)
       if len(cols) <= nameCol or len(cols) <= sizeCol:
-        print('python2 urllib / ftplib returning unexpected FTP ' + \
+        print('python3 urllib / ftplib returning unexpected FTP ' + \
         'contents format @ downloader.getFolderInfo()', file=sys.stderr)
         print('url: %s' % url, file=sys.stderr)
         err = Exception()

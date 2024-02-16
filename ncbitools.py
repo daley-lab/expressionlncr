@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 #
 #functions related to working with NCBI e-utilities
 #
@@ -10,11 +10,8 @@
 #https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=gds&query_key=XX&WebEnv=YY&retmode=xml&version=2.0&retmax=10
 #
 
-
-import pdb
-
 import sys
-import urllib.request, urllib.parse, urllib.error
+import urllib.parse
 import xml.etree.cElementTree as cet
 
 #local
@@ -121,7 +118,7 @@ def parseEsummary(esummaryFile, accessionType, filterType=None, filterValue=None
         print('No %s filter tag found for %s %s' \
             % (filterType, accessionType, docsum.attrib['uid']), file=sys.stderr)
         continue
-      if not (filterValue in filtr.text):
+      if filterValue not in filtr.text:
         continue
     for acc in accns:
       accessions.add(acc.text)
@@ -141,7 +138,7 @@ def getAccessionsFromSearch(database, accessionType, terms,
     getEsummary(database, queryKey, webEnv, esummaryOutput)
     #parses esummary for accession ids and returns them
     accessions = parseEsummary(esummaryOutput, accessionType, filterType, filterValue)
-  except Exception as e:
+  except Exception:
     print('Error: getAccessionsFromSearch failed, returning empty array')
   return accessions
 

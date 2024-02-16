@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # Script to evaluate the chromosome positional overlap between two BED files.
 # Will use this to find out which lncRNAs have overlapping expression probe data.
 #
@@ -6,17 +6,13 @@
 #  unfortunately only returns a BED file of the overlap (incl. only first file in output).
 #
 
-
 import csv
 from collections import defaultdict
 import datetime
 import getopt
 import math
 import operator
-import os
-import re
 import sys
-import shutil
 
 #local
 import arraytools
@@ -34,6 +30,9 @@ import constants as c
 #this approach should be faster if the performance hit is due to allocating
 # objects to memory
 def writeOverlap(inputA, inputB, outputA, outputB, output, chunksize):
+  import numpy as np
+  import pandas as pd
+
   #remove old output files if present
   print('deleting file %s if present...' % outputA)
   downloader.remove(outputA)
@@ -45,11 +44,11 @@ def writeOverlap(inputA, inputB, outputA, outputB, output, chunksize):
   colNames = ['chrom', 'start', 'stop', 'name', 'value', 'strand']
   usedCols = [x for x in range(0, 6)]
   print('reading in file B (%s) to dataframe @ %s' % (inputB, str(datetime.datetime.now())))
-  with open(inputB, 'rb') as inB:
+  with open(inputB, 'r') as inB:
     dataB = pd.read_csv(inB, header=None, sep='\t',
         names=colNames, usecols=usedCols)
   print('reading in file A (%s) to dataframe @ %s' % (inputA, str(datetime.datetime.now())))
-  with open(inputA, 'rb') as inA:
+  with open(inputA, 'r') as inA:
     #get number of chunks in file first
     numChunks = 0
     readerA = pd.read_csv(inA, header=None, sep='\t',
@@ -187,7 +186,7 @@ def writeOverlap(inputA, inputB, outputA, outputB, output, chunksize):
 
 #count up number of lines in a file
 def getNumLinesInFile(filename):
-  with open(filename, 'rb') as f:
+  with open(filename, 'r') as f:
     print('counting number of lines in file %s @ %s' % (filename, datetime.datetime.now()))
     total = 0
     for row in f:
@@ -215,8 +214,8 @@ def getOverlap(inputA, inputB, swap, chunksize, chromfilter, inputSorted):
   print('counting files @ %s ...' % datetime.datetime.now())
   totalA = getNumLinesInFile(inputA)
   totalB = getNumLinesInFile(inputB)
-  with open(inputA, 'rb') as a:
-    with open(inputB, 'rb') as b:
+  with open(inputA, 'r') as a:
+    with open(inputB, 'r') as b:
       readerA = csv.reader(a, delimiter=delim)
       readerB = csv.reader(b, delimiter=delim)
       #load file B into memory
@@ -251,7 +250,7 @@ def getOverlap(inputA, inputB, swap, chunksize, chromfilter, inputSorted):
             blines[chrom][strand] = chromStrandLines
           finally:
             chromStrandLines.append(newcols)
-      except ValueError as ve:
+      except ValueError:
         #unfortunately no skipping of bad lines in this method. abort.
         print('Error: Malformed BED file - Could not convert value to integer')
         return overlap
@@ -352,16 +351,15 @@ def getOverlap(inputA, inputB, swap, chunksize, chromfilter, inputSorted):
 #...
 #
 def createOverlapOutput(overlap, outputName, swap):
-  delim = '\t'
   #ensure directories to output file are created
   print('creating path to file ' + outputName + ' @ time: ' + str(datetime.datetime.now()))
   downloader.createPathToFile(outputName)
-  #delete file at output if already present. open(f, 'wb') should erase it for us but it's 
+  #delete file at output if already present. open(f, 'w') should erase it for us but it's 
   # appending for some strange reason.
   print('removing ' + outputName + ' if present...')
   downloader.remove(outputName)
   print('start writing output time: ' + str(datetime.datetime.now()))
-  with open(outputName, 'wb') as output:
+  with open(outputName, 'w') as output:
     header = '<!DOCTYPE overlapResult>\n<overlap>\n'
     output.write(header)
     #for consistency later on in the pipeline just always have <a><b></b></a>
@@ -395,7 +393,7 @@ def createBedFromChromFeatures(chromFeatures, outputName, delim='\t', writeHeade
   downloader.remove(outputName)
   #write out the file
   print('start writing features file @ time: ' + str(datetime.datetime.now()))
-  with open(outputName, 'wb') as output:
+  with open(outputName, 'w') as output:
     if writeHeader:
       header = '#Chromosome%sStart%sStop%sName%sScore%sStrand\n' % \
           (delim, delim, delim, delim, delim)
@@ -480,8 +478,6 @@ def __main__():
     output = args[0]
   print('getting overlap b/w BED files @ time: ' + str(datetime.datetime.now()))
   if pandasPipeline:
-    import pandas as pd
-    import numpy as np
     print('using pandas pipeline')
     #a non-object oriented pipeline in pandas. unfortunately, much slower atm.
     writeOverlap(inputA, inputB, outputA, outputB, output, chunksize)

@@ -1,7 +1,6 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 #functions for working with human chromosomes or 
 # organisms with fewer chromosomes than humans
-
 
 from types import IntType, StringType
 

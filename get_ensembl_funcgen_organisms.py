@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # Curls the Ensembl FTP server for a listing of available organisms with the funcgen
 # database information and returns it.
 #
@@ -16,7 +16,6 @@
 
 import getopt
 import operator
-import os
 import sys
 import re
 
@@ -31,7 +30,7 @@ import ziptools
 # e.g. homo_sapiens_funcgen_84_38 -> Homo sapiens v84.38
 def parseFtpIndexForOrganisms(url, output, prettify, arrayFiles, dataDir):
   #1. curl ftp://ftp.ensembl.org/pub/current_mysql/ > output
-  #note that urllib2 works for FTP too, not just HTTP. same output as curl.
+  #note that urllib works for FTP too, not just HTTP. same output as curl.
   data = downloader.getUrl(url)
   #create path to output file
   downloader.createPathToFile(output)
@@ -39,8 +38,8 @@ def parseFtpIndexForOrganisms(url, output, prettify, arrayFiles, dataDir):
   #3. column 9 (last) should be the directory (organism) name
   organisms = {}
   curlDirectoryColumn = 8
-  with open(output, 'wb') as outputFile:
-    for line in data.split('\r\n'):
+  with open(output, 'w') as outputFile:
+    for line in data.splitlines():
       cols = re.split('\s+', line)
       #last line in the file blank, possibly others in future. so skip these lines
       if len(cols) > curlDirectoryColumn:

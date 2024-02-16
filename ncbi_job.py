@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # Example ncbi e-utils job actually querying entrez/e-utils.
 # Supports long parameters (e.g. id lists) via splitting across multiple requests.
 # See test_job.py for a simpler test of the job manager.
@@ -6,7 +6,7 @@
 from datetime import datetime
 import sys
 import time
-import urllib.request, urllib.parse, urllib.error
+import urllib.parse
 
 import downloader
 from ncbi_job_manager import NCBIJobManager
