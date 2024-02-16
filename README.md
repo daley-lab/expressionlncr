@@ -8,7 +8,7 @@ Available at http://www.genapha.hli.ubc.ca/lncrna. Public repository at http://g
 
 ### GUI via Python:
 
-Run gui.py or gui.pyc via python.
+Run gui.py with python.
 
 ### Windows build:
 
@@ -24,46 +24,38 @@ Instead of find_overlap.py there exists a Galaxy tool (for ex.) to compare BED f
 
 Compiled packages have been compiled under 64-bit operating systems.
 
-#### Python 2 package requirements:
+#### Python 3 package requirements:
+
+An extra system library is required for Qt 6, xcb-cursor0.
+
+```bash
+sudo apt install libxcb-cursor0
 ```
-csv
-datetime
-errno
-getopt
-gzip
-itertools
-operator
-os
-PySide
-re
-sets
-signal
-sys
-shutil
-threading
-time
-xml.etree.cElementTree
-urllib
-urllib2
+
+Python3 requirements are in `requirements.txt`:
+
+```
+PySide6
 
 Optional:
 numpy
 pandas
 ```
 
-To install:
+(Optional)
 
-```
-apt-get install python-pyside python-...
-```
-as appropriate, on Debian-like Linuxes. PySide is likely the only required package you don't already have installed, and only the GUI relies on it.
+Using a virtual environment is optional but recommended. If you install requirements into virtual environment, make sure to use it when running things.
 
-or:
+```bash
+python -m venv .venv
+source .venv/bin/activate
+```
 
+To install the project's requirements:
+
+```bash
+python -m pip install -r requirements.txt
 ```
-python -m pip install pyside ...
-```
-as appropriate, using the Python package system.
 
 #### Running Scripts:
 
