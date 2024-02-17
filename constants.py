@@ -89,8 +89,8 @@ GET_LNCRNA_DEFAULTS = {
   'organism': 'hg38',
   'output': 'data/lncrnas.bed',
   'highconf': True,
-  'version': '3.1',
-  'year': '2016'
+  'lncipediaVersion': '5.2',
+  'noncodeVersion': 'v5'
 }
 
 #
@@ -169,8 +169,8 @@ LNCRNA_CHOOSE_OUTPUT = 'Choose output file - will be created / overwritten'
 LNCRNA_START_LOCATION = '.'
 LNCRNA_FILE_TYPES = 'BED Files (*.bed)'
 LNCRNA_SOURCE_ITEMS = {
-  'noncode': 'NONCODE.org',
-  'lncipedia': 'LNCipedia.org',
+  'noncode': 'NONCODE.org v5',
+  'lncipedia': 'LNCipedia.org v5.2',
   'custom': 'Custom BED file'
 }
 
