@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 #
 #GUI wrapper for lncrna python scripts using PySide Qt bindings.
 #
@@ -7,33 +7,33 @@
 import signal
 import sys
 
-from PySide.QtCore import *
-from PySide.QtGui import *
+from PySide6 import QtCore as qt
+from PySide6 import QtWidgets as qtw
+from PySide6 import QtGui as qtg
 
-from forms import *
-from gui_job import *
+import forms
 import constants as c
 
 
-class App(QWidget):
+class App(qtw.QWidget):
   def __init__(self):
     super(App, self).__init__()
     self.initUI()
 
   def initUI(self):
     #application min size and title
-    self.setMinimumSize(QSize(c.APP_MIN_WIDTH, c.APP_MIN_HEIGHT))
+    self.setMinimumSize(c.APP_MIN_WIDTH, c.APP_MIN_HEIGHT)
     self.setWindowTitle(c.APP_TITLE)
     #add a layout and a tab widget to hold all the forms
-    layout = QVBoxLayout()
-    tabs = QTabWidget(self)
+    layout = qtw.QVBoxLayout()
+    tabs = qtw.QTabWidget(self)
     #add all the tabs to the tab widget
-    greeterForm = GreeterForm(parent=tabs, continueCallback=self.onContinueButton)
-    lncrnaForm = LncrnaForm(tabs, continueCallback=self.onContinueButton)
-    probeForm = ProbeForm(tabs, continueCallback=self.onContinueButton)
-    overlapForm = OverlapForm(tabs, continueCallback=self.onContinueButton)
-    expressionForm = ExpressionForm(tabs, continueCallback=self.onContinueButton)
-    resultsForm = ResultsForm(tabs, continueCallback=self.onContinueButton)
+    greeterForm = forms.GreeterForm(parent=tabs, continueCallback=self.onContinueButton)
+    lncrnaForm = forms.LncrnaForm(tabs, continueCallback=self.onContinueButton)
+    probeForm = forms.ProbeForm(tabs, continueCallback=self.onContinueButton)
+    overlapForm = forms.OverlapForm(tabs, continueCallback=self.onContinueButton)
+    expressionForm = forms.ExpressionForm(tabs, continueCallback=self.onContinueButton)
+    resultsForm = forms.ResultsForm(tabs, continueCallback=self.onContinueButton)
     tabs.addTab(greeterForm, c.GREETER_TAB_LABEL)
     tabs.addTab(lncrnaForm, c.LNCRNA_TAB_LABEL)
     tabs.addTab(probeForm, c.PROBE_TAB_LABEL)
@@ -58,11 +58,11 @@ class App(QWidget):
     #set up global shortcuts
     self.setupShortcuts()
     #run main process
-    qt.exec_()
+    qt.exec()
 
   def setupShortcuts(self):
-    ctrlQ = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_Q), self)
-    ctrlW = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_W), self)
+    ctrlQ = qtg.QShortcut(qtg.QKeySequence(qtg.Qt.CTRL | qtg.Qt.Key_Q), self)
+    ctrlW = qtg.QShortcut(qtg.QKeySequence(qtg.Qt.CTRL | qtg.Qt.Key_W), self)
     ctrlQ.activated.connect(self.onKeyboardQuit)
     ctrlW.activated.connect(self.onKeyboardQuit)
 
@@ -91,7 +91,7 @@ class App(QWidget):
       'resultsOverlapFile': c.PARSE_GEO_DATASERIES_DEFAULTS['overlapFile']
     }
 
-  @Slot()
+  @qt.Slot()
   def onContinueButton(self):
     #save the user-entered gui variables for this form before we transition
     # to the next form
@@ -104,17 +104,17 @@ class App(QWidget):
       #autofill the new form variables
       self.tabs.currentWidget().autofill(self.guiVars)
 
-  @Slot()
+  @qt.Slot()
   def onKeyboardQuit(self):
-    if AppMessageBox.question(self, '', c.APP_QUIT_MESSAGE, 
-        QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes) == QMessageBox.Yes:
-      QCoreApplication.quit()
+    if qtw.QMessageBox.question(self, '', c.APP_QUIT_MESSAGE, 
+        qtw.QMessageBox.Yes | qtw.QMessageBox.No, qtw.QMessageBox.Yes) == qtw.QMessageBox.Yes:
+      qtw.QCoreApplication.quit()
 
 
 #create instance of app and run
 if __name__ == '__main__':
   #let ctrl-c (or o/s specific interrupt signal) close the application immediately
   signal.signal(signal.SIGINT, signal.SIG_DFL)
-  qt = QApplication(sys.argv) 
+  qt = qtw.QApplication(sys.argv) 
   app = App()
   sys.exit(app.run())

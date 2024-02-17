@@ -1,27 +1,25 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 #
 #Classes for running python scripts from the GUI
 #
 
-
 import datetime
-import os
 import sys
-import PySide
-from PySide.QtCore import *
+
+from PySide6 import QtCore as qt
 
 
 #class that starts a new process for a python job.
-class GuiJob(QObject):
+class GuiJob(qt.QObject):
   types = (LNCRNA, PROBE, OVERLAP, EXPRESSION, EXPRESSION_SEARCH, RESULTS) = list(range(6))
   typeNames = ['Downloading lncRNA', 'Downloading Ensembl probe information',
       'Finding lncRNA/probe overlap', 'Downloading expression probes',
       'Searching for expression probes', 'Parsing results'
   ]
-  started = Signal()
-  finished = Signal()
-  error = Signal()
-  jobProgram = 'python'  #python2 causes problems on Windows default python install
+  started = qt.Signal()
+  finished = qt.Signal()
+  errorOccurred = qt.Signal()
+  jobProgram = 'python'
 
   #job is [] of args
   def __init__(self, jobArgs=None, jobProgram=None):
@@ -32,10 +30,10 @@ class GuiJob(QObject):
 
   #start up the job
   def start(self):
-    self.process = QProcess()
+    self.process = qt.QProcess()
     self.process.started.connect(self.__onStarted)
     self.process.finished.connect(self.__onFinished)
-    self.process.error.connect(self.__onError)
+    self.process.errorOccurred.connect(self.__onError)
     self.process.readyReadStandardOutput.connect(self.__onReadyReadStandardOutput)
     self.process.readyReadStandardError.connect(self.__onReadyReadStandardError)
     self.process.start(self.jobProgram, self.jobArgs)
@@ -52,7 +50,7 @@ class GuiJob(QObject):
   def __onError(self):
     print(sys.stderr, 'Error running job @ %s:\n\t%s %s' % (datetime.datetime.now(),
         self.jobProgram, self.jobArgs))
-    self.error.emit()
+    self.errorOccurred.emit()
 
   def __onReadyReadStandardOutput(self):
     output = self.process.readAllStandardOutput()
@@ -67,13 +65,13 @@ class GuiJob(QObject):
 ##Contains signals to all buttons / UI elements to be enabled/disabled.
 ##Custom signals in PySide have some gotchas, see here:
 ## http://stackoverflow.com/questions/2970312/pyqt4-qtcore-pyqtsignal-object-has-no-attribute-connect
-#class GuiJobCommunicator(QObject):
+#class GuiJobCommunicator(qt.QObject):
 #  started = [Signal() for job in GuiJob.types]
 #  finished = [Signal() for job in GuiJob.types]
 #  error = [Signal() for job in GuiJob.types]
 #
 #  def __init__(self):
-#    QObject.__init__(self)
+#    qt.QObject.__init__(self)
 #  
 #  #note: only one of each job type per signal
 #  def start(self, jobType):
@@ -83,11 +81,12 @@ class GuiJob(QObject):
 #    self.finished[GuiJob.types[jobType]].emit()
 #    
 #  def errored(self, jobType):
-#    self.error[GuiJob.types[jobType]].emit()
+#    self.errorOccurred[GuiJob.types[jobType]].emit()
     
 
 def __main__():
   sys.exit(0)
+
 
 if __name__ == '__main__':
   __main__()
