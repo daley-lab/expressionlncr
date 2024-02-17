@@ -108,7 +108,7 @@ class App(qtw.QWidget):
   def onKeyboardQuit(self):
     if qtw.QMessageBox.question(self, '', c.APP_QUIT_MESSAGE, 
         qtw.QMessageBox.Yes | qtw.QMessageBox.No, qtw.QMessageBox.Yes) == qtw.QMessageBox.Yes:
-      qtw.QCoreApplication.quit()
+      qtw.QApplication.quit()
 
 
 #create instance of app and run
