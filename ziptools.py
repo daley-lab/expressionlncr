@@ -9,19 +9,19 @@ import tarfile
 #untar/untar+gunzip file from a tar archive to outputFilename. expects 
 # single file archive (ignores files in TAR after first).
 def untargz(sourceFilename, outputFilename):
-    with tarfile.open(sourceFilename) as zipped:
-        firstMember = next(zipped)
-        if firstMember:
-            firstFileHandle = zipped.extractfile(firstMember)
-            data = firstFileHandle.read()
-            with open(outputFilename, 'w') as plain:
-                plain.write(data)
+	with tarfile.open(sourceFilename) as zipped:
+		firstMember = next(zipped)
+		if firstMember:
+			firstFileHandle = zipped.extractfile(firstMember)
+			data = firstFileHandle.read()
+			with open(outputFilename, 'wb') as plain:
+				plain.write(data)
 
 #bulk whole file into memory unzipping method. expects single file archive.
 def gunzip(sourceFilename, outputFilename):
 	with gzip.open(sourceFilename, 'r') as zipped:
 		data = zipped.read()
-	with open(outputFilename, 'w') as plain:
+	with open(outputFilename, 'wb') as plain:
 		plain.write(data)
 
 #line-wise unzipping method. expects single file archive.

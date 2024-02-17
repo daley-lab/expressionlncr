@@ -13,9 +13,12 @@ import urllib.parse
 
 #pass in url to file to download, and the output (optionally including directories 
 # to create above file)
-def simpleDownload(url, output):
+def simpleDownload(url, output, force=False):
+  if not force and os.path.isfile(output):
+    print(f'Output file {output} already exists, skipping download ...', file=sys.stdout)
+    return
   #download the whole file into memory
-  user_agent = 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:44.0) Gecko/20100101 Firefox/44.0'
+  user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
   headers = {'User-Agent': user_agent} 
   request = urllib.request.Request(url, None, headers)
   response = urllib.request.urlopen(request)
@@ -23,7 +26,7 @@ def simpleDownload(url, output):
   #create any missing directories in the output path
   createPathToFile(output)
   #write the file to dirname
-  with open(output, 'w') as f:
+  with open(output, 'wb') as f:
     f.write(data)
 
 #pass in a file and create the missing directories to the file if any.
@@ -50,9 +53,8 @@ def remove(removefile):
 
 #returns content instead of writing to a file
 def getUrl(url):
-  #user_agent = 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:44.0) Gecko/20100101 Firefox/44.0'
-  #headers={'User-Agent': user_agent} 
-  headers = {}
+  user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
+  headers = {'User-Agent': user_agent} 
   request = urllib.request.Request(url, None, headers)
   response = urllib.request.urlopen(request)
   data = response.read().decode('utf-8')
