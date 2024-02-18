@@ -9,7 +9,7 @@
 
 FIND_GEO_DATASERIES_DEFAULTS = {
   'ftp': 'ftp://ftp.ncbi.nlm.nih.gov/geo/series',
-  'organism': 'homo_sapiens_funcgen_87_38',
+  'organism': 'homo_sapiens_funcgen_111_38',
   'dataDir': 'data',
   'seriesOutput': 'data/matrices/series.txt', 
   'infoOutput': 'data/matrices/summary.txt', 
@@ -56,7 +56,7 @@ GET_ENSEMBL_PROBES_DEFAULTS = {
   #max # lines to work with in files at once. tweak according to memory.
   'chunksize': 50000,
   'dataDir': 'data',
-  'organism': 'homo_sapiens_funcgen_87_38',
+  'organism': 'homo_sapiens_funcgen_111_38',
   'output': 'data/probes.bed',
   'forceCurrentSchema': False,
   'fileTypes': ['array', 'array_chip', 'coord_system', 'probe', 'probe_set',
@@ -80,7 +80,7 @@ PARSE_GEO_DATASERIES_DEFAULTS = {
   'dataDir': 'data/matrices',
   'outDir': 'data/results',
   'lncrnaFile': 'data/lncrnas.bed',
-  'organism': 'homo_sapiens_funcgen_87_38',
+  'organism': 'homo_sapiens_funcgen_111_38',
   'completedFilesFile': 'data/results/expressed_series/completed_files.txt'
 }
 
@@ -176,23 +176,21 @@ LNCRNA_SOURCE_ITEMS = {
 
 #not used if get_ensembl_funcgen_organisms.py works
 PROBE_ENSEMBL_ORGANISMS = {
-  'bos_taurus_funcgen_87_31': 'Bos taurus v87.31 (Cow)',
-  'caenorhabditis_elegans_funcgen_87_250': 'Caenorhabditis elegans v87.250 (C. elegans)',
-  'canis_familiaris_funcgen_87_31': 'Canis familiaris v87.31 (Dog)',
-  'ciona_intestinalis_funcgen_87_3': 'Ciona intestinalis v87.3 (C. intestinalis)',
-  'danio_rerio_funcgen_87_10': 'Danio rerio v87.10 (Zebrafish)',
-  'drosophila_melanogaster_funcgen_87_602': 'Drosophila melanogaster v87.602 (D. melanogaster)',
-  'gallus_gallus_funcgen_87_5': 'Gallus gallus v87.5 (Chicken)',
-  'homo_sapiens_funcgen_87_38': 'Homo sapiens v87.38 (Human)',
-  'macaca_mulatta_funcgen_87_801': 'Macaca mulatta v87.801 (Rhesus macaque)',
-  'mus_musculus_funcgen_87_38': 'Mus musculus v87.38 (Mouse)',
-  'ornithorhynchus_anatinus_funcgen_87_1': 'Ornithorhynchus anatinus v87.1 (Platypus)',
-  'oryctolagus_cuniculus_funcgen_87_2': 'Oryctolagus cuniculus v87.2 (European rabbit)',
-  'pan_troglodytes_funcgen_87_214': 'Pan troglodytes v87.214 (Chimp)',
-  'rattus_norvegicus_funcgen_87_6': 'Rattus norvegicus v87.6 (Rat)',
-  'saccharomyces_cerevisiae_funcgen_87_4': 'Saccharomyces cerevisiae v87.4 (Yeast)',
-  'sus_scrofa_funcgen_87_102': 'Sus scrofa v87.102 (Wild boar)',
-  'xenopus_tropicalis_funcgen_87_42': 'Xenopus tropicalis v87.42 (Western clawed frog)'
+  'caenorhabditis_elegans_funcgen_111_282': 'Caenorhabditis elegans v111.282 (C. elegans)',
+  'canis_lupus_familiaris_funcgen_111_1': 'Canis lupus familiaris v111.31 (Dog)',
+  'ciona_intestinalis_funcgen_111_3': 'Ciona intestinalis v111.3 (C. intestinalis)',
+  'danio_rerio_funcgen_111_11': 'Danio rerio v111.11 (Zebrafish)',
+  'drosophila_melanogaster_funcgen_111_10': 'Drosophila melanogaster v111.10 (D. melanogaster)',
+  'gallus_gallus_funcgen_111_7': 'Gallus gallus v111.7 (Chicken)',
+  'homo_sapiens_funcgen_111_38': 'Homo sapiens v111.38 (Human)',
+  'macaca_mulatta_funcgen_111_10': 'Macaca mulatta v111.10 (Rhesus macaque)',
+  'mus_musculus_funcgen_111_39': 'Mus musculus v111.39 (Mouse)',
+  'ornithorhynchus_anatinus_funcgen_111_1': 'Ornithorhynchus anatinus v111.1 (Platypus)',
+  'oryctolagus_cuniculus_funcgen_111_2': 'Oryctolagus cuniculus v111.2 (European rabbit)',
+  'pan_troglodytes_funcgen_111_3': 'Pan troglodytes v111.3 (Chimp)',
+  'rattus_norvegicus_funcgen_111_72': 'Rattus norvegicus v111.72 (Rat)',
+  'saccharomyces_cerevisiae_funcgen_111_4': 'Saccharomyces cerevisiae v111.4 (Yeast)',
+  'sus_scrofa_funcgen_111_111': 'Sus scrofa v111.111 (Wild boar)',
 }
 PROBE_TAB_LABEL = '&probe import'
 PROBE_TITLE = '<h3>Get Ensembl expression probes</h3>'
