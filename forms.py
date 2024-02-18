@@ -346,7 +346,7 @@ class ProbeForm(GuiForm):
     self.dataDir = FileChooser(dialogType=c.DIRECTORY_OPEN_DIALOG_TYPE)
     self.output = FileChooser(dialogType=c.SAVE_DIALOG_TYPE, fileTypes=c.BED_FILE_TYPE)
     self.refreshButton = qtw.QPushButton(c.PROBE_REFRESH_BUTTON_MSG)
-    self.refreshButton.clicked.connect(self.refreshAvailableOrganisms)
+    self.refreshButton.clicked.connect(self.refreshAvailableOrganisms(force=True))
     #organism combobox has smalll refresh button to right of it
     comboLayout = qtw.QHBoxLayout()
     comboLayout.addWidget(self.organism, stretch=4)
@@ -369,7 +369,7 @@ class ProbeForm(GuiForm):
   
   #method to fetch the latest ensembl funcgen organisms available on the ftp server.
   #TODO: refactor to run in separate thread from GUI.
-  def refreshAvailableOrganisms(self):
+  def refreshAvailableOrganisms(self, force=False):
     d = c.GET_ENSEMBL_FUNCGEN_ORGANISMS_DEFAULTS
     if self.dataDir:
       availableOrganismsFileName = '%s/availableOrganisms.txt' % self.dataDir.text()

@@ -16,6 +16,7 @@
 
 import getopt
 import operator
+import os
 import sys
 import re
 
@@ -28,7 +29,10 @@ import ziptools
 #gets the index at FTP url and parses it for Ensembl organisms with the funcgen database.
 # returns a map of database name to prettified name for user selection.
 # e.g. homo_sapiens_funcgen_84_38 -> Homo sapiens v84.38
-def parseFtpIndexForOrganisms(url, output, prettify, arrayFiles, dataDir):
+def parseFtpIndexForOrganisms(url, output, prettify, arrayFiles, dataDir, force=False):
+  if not force and os.path.isfile(output):
+    print(f'Output file {output} already exists, skipping download ...', file=sys.stdout)
+    return
   #1. curl ftp://ftp.ensembl.org/pub/current_mysql/ > output
   #note that urllib works for FTP too, not just HTTP. same output as curl.
   data = downloader.getUrl(url)
