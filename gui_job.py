@@ -53,12 +53,12 @@ class GuiJob(qt.QObject):
     self.errorOccurred.emit()
 
   def __onReadyReadStandardOutput(self):
-    output = self.process.readAllStandardOutput()
-    print('%s' % output.__str__())
+    processOutput = self.process.readAllStandardOutput()
+    print(f'{processOutput.toStdString()}')
 
   def __onReadyReadStandardError(self):
-    error = self.process.readAllStandardError()
-    print('Error: %s' % error.__str__())
+    processError = self.process.readAllStandardError()
+    print(f'{processError.toStdString()}', file=sys.stderr)
 
 
 ##Class to communicate between the GUI jobs and the GUI.
