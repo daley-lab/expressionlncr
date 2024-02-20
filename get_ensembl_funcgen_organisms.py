@@ -2,7 +2,7 @@
 # Curls the Ensembl FTP server for a listing of available organisms with the funcgen
 # database information and returns it.
 #
-#1. curl ftp://ftp.ensembl.org/pub/current_mysql/ > curl_index.txt
+#1. curl ftp://ftp.ensembl.org/pub/current/mysql/ > curl_index.txt
 #2. parse into columns via space delimiting merging multiple delimiters (not tab sep)
 #3. column 9 (last) should be the directory (organism) name
 #4.
@@ -33,7 +33,7 @@ def parseFtpIndexForOrganisms(url, output, prettify, arrayFiles, dataDir, force=
   if not force and os.path.isfile(output):
     print(f'Output file {output} already exists, skipping download ...', file=sys.stdout)
     return
-  #1. curl ftp://ftp.ensembl.org/pub/current_mysql/ > output
+  #1. curl ftp://ftp.ensembl.org/pub/current/mysql/ > output
   #note that urllib works for FTP too, not just HTTP. same output as curl.
   data = downloader.getUrl(url)
   #create path to output file

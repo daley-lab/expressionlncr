@@ -46,7 +46,7 @@ BED_DEFAULTS = {
 
 GET_ENSEMBL_FUNCGEN_ORGANISMS_DEFAULTS = {
   'output': 'data/available_organisms.txt', 
-  'url': 'ftp://ftp.ensembl.org/pub/current_mysql/',
+  'url': 'ftp://ftp.ensembl.org/pub/current/mysql/',
   'pretty': False,
   'dataDir': 'data/arrays',
   'arrayFiles': False
