@@ -31,12 +31,21 @@ import get_ensembl_funcgen_organisms as org
 #@return a map of file type to location
 def getFuncgenFiles(orgString, destDir, fileTypes, cleanUp):
   downloader.createPathToFile(destDir)
-  baseUrl = 'ftp://ftp.ensembl.org/pub/current_mysql'
+  # https://useast.ensembl.org/info/docs/api/core/core_schema.html
+  # https://useast.ensembl.org/info/docs/api/funcgen/funcgen_schema.html
+  #baseUrl = 'ftp://ftp.ensembl.org/pub/current/mysql'
+  baseUrl = f'ftp://ftp.ensembl.org/pub/release-{c.PROBE_ENSEMBL_VERSION}/mysql'
   fileNameToLocation = {}
+  funcgenUrlString = orgString
+  #coreUrlString = orgString.replace('funcgen', 'core')
   for f in fileTypes:
     print('get funcgen files - downloading %s ...' % f)
-    url = baseUrl + '/' + orgString + '/' + f + '.txt.gz'
-    output = destDir + '/' + f + '.txt'
+    #schemaString = coreUrlString if f in ['coord_system', 'seq_region'] else funcgenUrlString
+    schemaString = funcgenUrlString
+    url = baseUrl + '/' + schemaString + '/' + f + '.txt.gz'
+    if not destDir.endswith('/'):
+      destDir += '/'
+    output = destDir + f + '.txt'
     zippedOutput = output + '.gz'
     downloader.simpleDownload(url, zippedOutput)
     ziptools.gunzip(zippedOutput, output)
@@ -70,11 +79,12 @@ def getCoordSystemId(coordSystemFile, schemaBuild, forceCurrentSchema):
       coordSystemId = cols[coordSystemIdCol]
       name = cols[nameCol]
       currentSchemaBuild = cols[schemaBuildCol]
-      isCurrent = cols[isCurrentCol]
       if name == 'chromosome' and currentSchemaBuild == schemaBuild:
-        if not isCurrent and forceCurrentSchema:
-          print('Schema build passed to get_ensembl_probes.py is not current. Aborting...', file=sys.stderr)
-          sys.exit(2)
+        if forceCurrentSchema:
+          isCurrent = cols[isCurrentCol]
+          if not isCurrent:
+            print('Schema build passed to get_ensembl_probes.py is not current. Aborting...', file=sys.stderr)
+            sys.exit(2)
         break
   return coordSystemId
 
@@ -512,7 +522,8 @@ def __main__():
   if len(args) > 0:
     output = args[0]
   #add trailing slash to directory so recognised as such
-  dataDir = dataDir + '/'
+  if not dataDir.endswith('/'):
+    dataDir += '/'
   print('Start get_ensembl_probes @ time: ' + str(datetime.datetime.now()))
   #get available funcgen organisms if we don't already have a file with the available 
   # organisms in it
@@ -570,7 +581,7 @@ def __main__():
   print('Start coord system time: ' + str(datetime.datetime.now()))
   coordSystemId = getCoordSystemId(funcgenFiles['coord_system'], schemaBuild, forceCurrentSchema)
   print('Coordinate system id: %s' % coordSystemId)
-  #get all seqeunce region ids for those chromosomes. note # ids = # chromosomes in the organism.
+  #get all sequence region ids for those chromosomes. note # ids = # chromosomes in the organism.
   print('Start sequence regions time: ' + str(datetime.datetime.now()))
   seqRegionIdMap = getSequenceRegionIds(funcgenFiles['seq_region'], coordSystemId, schemaBuild)
   print('Number of sequence region ids: %s' % len(seqRegionIdMap))

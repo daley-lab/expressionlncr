@@ -175,22 +175,24 @@ LNCRNA_SOURCE_ITEMS = {
 }
 
 #not used if get_ensembl_funcgen_organisms.py works
+# Note: Ensembl version vXX / organism reference version AA.BB
+PROBE_ENSEMBL_VERSION = 90
 PROBE_ENSEMBL_ORGANISMS = {
-  'caenorhabditis_elegans_funcgen_111_282': 'Caenorhabditis elegans v111.282 (C. elegans)',
-  'canis_lupus_familiaris_funcgen_111_1': 'Canis lupus familiaris v111.31 (Dog)',
-  'ciona_intestinalis_funcgen_111_3': 'Ciona intestinalis v111.3 (C. intestinalis)',
-  'danio_rerio_funcgen_111_11': 'Danio rerio v111.11 (Zebrafish)',
-  'drosophila_melanogaster_funcgen_111_10': 'Drosophila melanogaster v111.10 (D. melanogaster)',
-  'gallus_gallus_funcgen_111_7': 'Gallus gallus v111.7 (Chicken)',
-  'homo_sapiens_funcgen_111_38': 'Homo sapiens v111.38 (Human)',
-  'macaca_mulatta_funcgen_111_10': 'Macaca mulatta v111.10 (Rhesus macaque)',
-  'mus_musculus_funcgen_111_39': 'Mus musculus v111.39 (Mouse)',
-  'ornithorhynchus_anatinus_funcgen_111_1': 'Ornithorhynchus anatinus v111.1 (Platypus)',
-  'oryctolagus_cuniculus_funcgen_111_2': 'Oryctolagus cuniculus v111.2 (European rabbit)',
-  'pan_troglodytes_funcgen_111_3': 'Pan troglodytes v111.3 (Chimp)',
-  'rattus_norvegicus_funcgen_111_72': 'Rattus norvegicus v111.72 (Rat)',
-  'saccharomyces_cerevisiae_funcgen_111_4': 'Saccharomyces cerevisiae v111.4 (Yeast)',
-  'sus_scrofa_funcgen_111_111': 'Sus scrofa v111.111 (Wild boar)',
+  'caenorhabditis_elegans_funcgen_90_250': 'Caenorhabditis elegans v90/25.0 (C. elegans)',
+  'canis_lupus_familiaris_funcgen_90_31': 'Canis lupus familiaris v90/3.1 (Dog)',
+  'ciona_intestinalis_funcgen_90_3': 'Ciona intestinalis v90/3 (C. intestinalis)',
+  'danio_rerio_funcgen_90_10': 'Danio rerio v90/10 (Zebrafish)',
+  'drosophila_melanogaster_funcgen_90_6': 'Drosophila melanogaster v90/6 (Fruit fly)',
+  'gallus_gallus_funcgen_90_5': 'Gallus gallus v90/5 (Chicken)',
+  'homo_sapiens_funcgen_90_38': 'Homo sapiens v90/38 (Human)',
+  'macaca_mulatta_funcgen_90_801': 'Macaca mulatta v90/8.0.1 (Rhesus macaque)',
+  'mus_musculus_funcgen_90_38': 'Mus musculus v90/38 (Mouse)',
+  'ornithorhynchus_anatinus_funcgen_90_1': 'Ornithorhynchus anatinus v90/1 (Platypus)',
+  'oryctolagus_cuniculus_funcgen_90_2': 'Oryctolagus cuniculus v90/2 (European rabbit)',
+  'pan_troglodytes_funcgen_90_214': 'Pan troglodytes v90/2.1.4 (Chimp)',
+  'rattus_norvegicus_funcgen_90_6': 'Rattus norvegicus v90/6 (Rat)',
+  'saccharomyces_cerevisiae_funcgen_90_4': 'Saccharomyces cerevisiae v90/4 (Yeast)',
+  'sus_scrofa_funcgen_90_111': 'Sus scrofa v90/11.1 (Wild boar)',
 }
 PROBE_TAB_LABEL = '&probe import'
 PROBE_TITLE = '<h3>Get Ensembl expression probes</h3>'
