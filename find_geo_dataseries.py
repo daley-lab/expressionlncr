@@ -210,7 +210,7 @@ def __main__():
     print('Getting relevant GEO platforms ...')
     probeOverlapFile = getPlatformsFromOverlap
     arrays = getArraysFromProbeOverlapBed(probeOverlapFile)
-    platforms = []
+    platforms = set([])
     for array in arrays:
       for gpl in plat.getGplsFromEnsemblArrayName(organism, array):
         platforms.append(gpl)

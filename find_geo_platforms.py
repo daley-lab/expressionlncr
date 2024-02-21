@@ -53,7 +53,7 @@ def searchForPlatforms(organism, title, esearchFile, esummaryFile):
 # and array_chip.txt.gz
 def getGplsFromEnsemblOrganismData(organism, dataDir):
   arrayChipMap = getEnsemblArraysFromFile(dataDir)
-  gpls = []
+  gpls = set([])
   for (id_, array) in arrayChipMap.items():
     arrayGpls = getGplsFromEnsemblArrayName(organism, array)
     #where multiple GPLs correspond to an array returned as 'GPL123,GPL234'.
@@ -82,10 +82,10 @@ def getGplsFromEnsemblArrayName(organism, array):
     gplString = org_array_gpl.ORG_TO_ARRAY_TO_GPL[organismKey][array]
     if not gplString or gplString == '':
       raise
-    gpls = gplString.split(',')
+    gpls = set(gplString.split(','))
   except Exception:
     #print 'Warning: no GPLs found for organism %s, array %s' % (organismKey, array)
     #exit gracefully and don't print any warning. many arrays currently 
     # don't have any GPL in the manually curated map.
-    gpls = []
+    gpls = set([])
   return gpls
