@@ -25,14 +25,25 @@ import downloader
 import constants as c
 import ziptools
 
+FUNCGEN_ORG_REGEX_PATTERN = '([a-z_0-9]+)_funcgen_([0-9]+)_([0-9]+)'
+
 
 #gets the index at FTP url and parses it for Ensembl organisms with the funcgen database.
 # returns a map of database name to prettified name for user selection.
 # e.g. homo_sapiens_funcgen_84_38 -> Homo sapiens v84.38
-def parseFtpIndexForOrganisms(url, output, prettify, arrayFiles, dataDir, force=False):
-  if not force and os.path.isfile(output):
-    print(f'Output file {output} already exists, skipping download ...', file=sys.stdout)
-    return
+def parseFtpIndexForOrganisms(url, output, dataDir=None, prettify=False, arrayFiles=None, force=False):
+  organisms = {}
+  if os.path.isfile(output):
+    if not force:
+      print(f'Output file {output} already exists, skipping download and reading ...', file=sys.stdout)
+      with open(output, 'r') as cachedFile:
+        for line in cachedFile.readlines():
+          org = line.strip().split()[0]
+          pretty = prettifyOrganism(org)
+          organisms[org] = pretty
+      return organisms
+    else:
+      print(f'Overwriting file {output} ...', file=sys.stdout)
   #1. curl ftp://ftp.ensembl.org/pub/current/mysql/ > output
   #note that urllib works for FTP too, not just HTTP. same output as curl.
   data = downloader.getUrl(url)
@@ -40,7 +51,6 @@ def parseFtpIndexForOrganisms(url, output, prettify, arrayFiles, dataDir, force=
   downloader.createPathToFile(output)
   #2. parse into columns via space delimiting merging multiple delimiters (not tab sep)
   #3. column 9 (last) should be the directory (organism) name
-  organisms = {}
   curlDirectoryColumn = 8
   with open(output, 'w') as outputFile:
     for line in data.splitlines():
@@ -48,7 +58,7 @@ def parseFtpIndexForOrganisms(url, output, prettify, arrayFiles, dataDir, force=
       #last line in the file blank, possibly others in future. so skip these lines
       if len(cols) > curlDirectoryColumn:
         org = cols[curlDirectoryColumn]
-        m = re.search('([a-z_]+)_funcgen_([0-9]+)_([0-9]+)', org)
+        m = re.search(FUNCGEN_ORG_REGEX_PATTERN, org)
         if m:
           pretty = prettifyOrganism(org)
           organisms[org] = pretty
@@ -68,28 +78,31 @@ def parseFtpIndexForOrganisms(url, output, prettify, arrayFiles, dataDir, force=
       ziptools.gunzip(arrayFileOut, arrayFileUnzip)
       downloader.remove(arrayFileOut)
   return organisms
-    
+
+
 #4.
 # format organism name to pretty format by converting '_' to ' ' and uppercasing the first word:
-# "canis_familiaris_XX_YY" -> "Canis familiaris vXX.YY"
+# "canis_familiaris_XX_YY" -> "Canis familiaris vXX/YY"
+# Note: here XX is Ensembl release version, YY is organism reference genome version.
 def prettifyOrganism(organism):
-  pattern = '([a-z_]+)_[a-z_]+_([0-9]+)_([0-9]+)'
-  m = re.search(pattern, organism)
+  m = re.search(FUNCGEN_ORG_REGEX_PATTERN, organism)
   if m:
     name = m.group(1)
-    major = m.group(2)
-    minor = m.group(3)
-    pretty = (name[0].upper() + name[1:]).replace('_', ' ') + ' v' + major + '.' + minor
+    ensemblVersion = m.group(2)
+    orgVersion = m.group(3)
+    pretty = (name[0].upper() + name[1:]).replace('_', ' ') + f' {orgVersion} / Ensembl v{ensemblVersion}'
   else:
     pretty = organism
   return pretty
 
+
 def usage(defaults):
   print('Usage: ' + sys.argv[0] + ' -u, --url <ENSEMBL_FTP> -o, --output <OUTPUT>')
-  print('Example: ' + sys.argv[0] + ' --output available_organisms.txt')
+  print('Example: ' + sys.argv[0] + ' --output availableOrganisms.txt')
   print('Defaults:')
   for key, val in sorted(iter(defaults.items()), key=operator.itemgetter(0)):
     print(str(key) + ' - ' + str(val))
+
 
 def __main__():
   shortOpts = 'ho:u:p:'
@@ -120,7 +133,8 @@ def __main__():
       arrayFiles = True
     elif opt in ('--data-dir'):
       dataDir = arg
-  organisms = parseFtpIndexForOrganisms(url, output, prettify, arrayFiles, dataDir)
+  parseFtpIndexForOrganisms(url, output, prettify, arrayFiles, dataDir)
+
 
 if __name__ == '__main__':
   __main__()

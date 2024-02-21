@@ -31,6 +31,7 @@ import get_ensembl_funcgen_organisms as org
 #@return a map of file type to location
 def getFuncgenFiles(orgString, destDir, fileTypes, cleanUp):
   downloader.createPathToFile(destDir)
+  # Note: to use current Ensembl release would need to rework for changes to database schema
   # https://useast.ensembl.org/info/docs/api/core/core_schema.html
   # https://useast.ensembl.org/info/docs/api/funcgen/funcgen_schema.html
   #baseUrl = 'ftp://ftp.ensembl.org/pub/current/mysql'
@@ -235,9 +236,9 @@ def getExpressionProbeDataFrame(probeFile, probeSetFile, expressionArrayChipIds,
 def getSchemaBuildFromOrganism(organism):
   #get schema build from organism parameter (retrieved in earlier script and put as option 
   # [prettified] into galaxy interface)
-  m = re.search('[a-z_]+_funcgen_([0-9]+_[0-9]+)', organism)
+  m = re.search(org.FUNCGEN_ORG_REGEX_PATTERN, organism)
   if m:
-    schemaBuild = m.group(1)
+    schemaBuild = m.group(2) + '_' + m.group(3)
   else: 
     print('Invalid value for parameter organism: ' + organism, file=sys.stderr)
     sys.exit(2)
