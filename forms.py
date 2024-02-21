@@ -20,16 +20,14 @@ import gui_job as job
 import get_ensembl_funcgen_organisms as org
 
 
-#need to convert unicode pretty print organism back to c.PROBE_ENSEMBL_ORGANISMS key.
-#ex: 'homo_sapiens_funcgen_85_38': 'Homo sapiens v85.38 (Human)'
-#if dictionary of available organisms passed it uses that else it uses defaults in constants file.
-def getOrgKeyFromPrettyUnicode(organism, availableOrganismsDict=None):
+# Need to convert unicode pretty print organism back to Ensembl funcgen database organism key.
+# ref: https://ftp.ensembl.org/pub/current/mysql
+# ex: 'homo_sapiens_funcgen_85_38': 'Homo sapiens v85.38 (Human)'
+def getOrgKeyFromPrettyUnicode(organism, availableOrganisms={}):
   orgKey = None
-  orgstring = organism.encode('utf8')
-  orgDict = availableOrganismsDict if availableOrganismsDict else c.PROBE_ENSEMBL_ORGANISMS
-  for (key, val) in orgDict.items():
-    #if the first word of the organism string is in the dictionary value good enough
-    if orgstring.split(' ')[0] in val:
+  for (key, val) in availableOrganisms.items():
+    # If the first word of the organism string is in the dictionary value good enough
+    if organism.split(' ')[0] in val:
       orgKey = key.strip()
       return orgKey
 
@@ -85,7 +83,7 @@ class FileChooser(qtw.QWidget):
     self.fileTypes = fileTypes if fileTypes else c.CHOOSER_FILE_TYPES
     self.title = title if title else (c.CHOOSER_SAVE_TITLE if dialogType == 'save' else c.CHOOSER_TITLE)
     layout = qtw.QHBoxLayout()
-    self.fileLabel = qtw.QLabel(c.CHOOSER_DEFAULT_FILE)
+    self.fileLabel = qtw.QLabel()
     if dialogType == c.SAVE_DIALOG_TYPE or dialogType == c.DIRECTORY_SAVE_DIALOG_TYPE:
       message = c.CHOOSER_SAVE_BUTTON_MSG
     else:
@@ -98,7 +96,7 @@ class FileChooser(qtw.QWidget):
 
   @qt.Slot()
   def onClick(self):
-    if self.fileLabel.text() == c.CHOOSER_DEFAULT_FILE:
+    if not self.fileLabel.text():
       currentDir = None
     else:
       currentDir = os.path.dirname(os.path.abspath(self.fileLabel.text()))
@@ -342,11 +340,10 @@ class ProbeForm(GuiForm):
     #options form
     formLayout = qtw.QFormLayout()
     self.organism = ComboBox()
-    self.organism.addItems(sorted([val for (key, val) in c.PROBE_ENSEMBL_ORGANISMS.items()]))
     self.dataDir = FileChooser(dialogType=c.DIRECTORY_OPEN_DIALOG_TYPE)
     self.output = FileChooser(dialogType=c.SAVE_DIALOG_TYPE, fileTypes=c.BED_FILE_TYPE)
     self.refreshButton = qtw.QPushButton(c.PROBE_REFRESH_BUTTON_MSG)
-    self.refreshButton.clicked.connect(self.refreshAvailableOrganisms(force=True))
+    self.refreshButton.clicked.connect(lambda : self.refreshAvailableOrganisms(force=True))
     #organism combobox has smalll refresh button to right of it
     comboLayout = qtw.QHBoxLayout()
     comboLayout.addWidget(self.organism, stretch=4)
@@ -371,22 +368,26 @@ class ProbeForm(GuiForm):
   #TODO: refactor to run in separate thread from GUI.
   def refreshAvailableOrganisms(self, force=False):
     d = c.GET_ENSEMBL_FUNCGEN_ORGANISMS_DEFAULTS
-    if self.dataDir:
-      availableOrganismsFileName = '%s/availableOrganisms.txt' % self.dataDir.text()
+    if self.dataDir.text():
+      availableOrganismsFileName = f'{self.dataDir.text()}/availableOrganisms.txt'
     else:
       availableOrganismsFileName = d['output']
-    availableOrganismsFileName = os.path.normpath(availableOrganismsFileName)
-    self.availableOrganisms = org.parseFtpIndexForOrganisms(d['url'], availableOrganismsFileName, None, None, None)
+    normalized = os.path.normpath(availableOrganismsFileName)
+    self.availableOrganisms = org.parseFtpIndexForOrganisms(
+      url=d['url'], output=normalized, dataDir=self.dataDir, force=force
+    )
     if self.availableOrganisms:
-      #save selected index. odds are that the new index for that org is the same if ensembl
-      # hasn't added funcgen organisms.
-      oldOrgIndex = self.organism.currentIndex()
+      orgIndex = self.organism.currentIndex()
+      if orgIndex is None or orgIndex < 0:
+        defaultOrg = c.GET_ENSEMBL_PROBES_DEFAULTS['organism']
+        defaultOrgPos = sorted([key for (key, val) in self.availableOrganisms.items()]).index(defaultOrg)
+        orgIndex = defaultOrgPos
       #clean out the default/old items
       self.organism.clear()
       #add the new
       self.organism.addItems(sorted([val for (key, val) in self.availableOrganisms.items()]))
-      #set the index to the old one
-      self.organism.setCurrentIndex(oldOrgIndex)
+      #set the index to the old one, or to the default
+      self.organism.setCurrentIndex(orgIndex)
 
   def getJobArgs(self):
     jobArgs = ['get_ensembl_probes.py', '--organism', \
@@ -401,6 +402,7 @@ class ProbeForm(GuiForm):
     return {
         'probeDataDir': os.path.normpath(self.dataDir.text()), 
         'probeOrganism': self.organism.currentText(),
+        'probeOrganismKey': getOrgKeyFromPrettyUnicode(self.organism.currentText(), self.availableOrganisms),
         'probeOutput': os.path.normpath(self.output.text())
     }
 
@@ -516,7 +518,6 @@ class ExpressionForm(GuiForm):
     #search form
     searchLayout = qtw.QFormLayout()
     self.organism = ComboBox()
-    self.organism.addItems(sorted([val for (key, val) in c.PROBE_ENSEMBL_ORGANISMS.items()]))
     self.searchTerms = qtw.QTextEdit()
     #TODO add default italicised, light grey example for search terms field
     self.searchButton = qtw.QPushButton(c.EXPRESSION_SEARCH_BUTTON_MSG)
@@ -692,8 +693,8 @@ class ResultsForm(GuiForm):
   def getJobArgs(self):
     if not self.lncrnaFile:
       self.lncrnaFile = os.path.normpath(c.GET_LNCRNA_DEFAULTS['output'])
-    #organism is the Ensembl funcgen "homo_sapiens_funcgen"-like name,
-    # not any prettified version.
+    # Here, organism is the Ensembl funcgen "homo_sapiens_funcgen"-like name,
+    #  not any prettified version.
     if not self.organism:
       self.organism = c.GET_ENSEMBL_PROBES_DEFAULTS['organism']
     jobArgs = ['parse_geo_dataseries.py', \
@@ -730,15 +731,7 @@ class ResultsForm(GuiForm):
     self.dataDir.setText(dataDir)
     self.outDir.setText(outDir)
     self.overlapFile.setText(overlapFile)
-    #search through values of ensembl probe organism funcgen name -> pretty name
-    # map and recover funcgen name from selected organism name.
-    #i.e. from 'Human' recover key and then value from:
-    # 'homo_sapiens_funcgen_85_38': 'Human (Homo sapiens v85.38)'
-    probeOrganism = guiVars['probeOrganism'].lower()
-    for (funcgen, pretty) in c.PROBE_ENSEMBL_ORGANISMS.items():
-      if pretty.lower().find(probeOrganism) != -1:
-        self.organism = funcgen
-        break
+    self.organism = guiVars['probeOrganismKey']
 
 
 #navigation footer form with next/prev buttons to navigate through all the gui actions.

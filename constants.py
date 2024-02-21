@@ -7,9 +7,11 @@
 # Default values for the CLI scripts
 #
 
+PROBE_ENSEMBL_VERSION = 90 # v90 last release before changes to schema
+
 FIND_GEO_DATASERIES_DEFAULTS = {
   'ftp': 'ftp://ftp.ncbi.nlm.nih.gov/geo/series',
-  'organism': 'homo_sapiens_funcgen_111_38',
+  'organism': f'homo_sapiens_funcgen_{PROBE_ENSEMBL_VERSION}_38',
   'dataDir': 'data',
   'seriesOutput': 'data/matrices/series.txt', 
   'infoOutput': 'data/matrices/summary.txt', 
@@ -45,8 +47,8 @@ BED_DEFAULTS = {
 }
 
 GET_ENSEMBL_FUNCGEN_ORGANISMS_DEFAULTS = {
-  'output': 'data/available_organisms.txt', 
-  'url': 'ftp://ftp.ensembl.org/pub/current/mysql/',
+  'output': 'data/availableOrganisms.txt', 
+  'url': f'ftp://ftp.ensembl.org/pub/release-{PROBE_ENSEMBL_VERSION}/mysql/',
   'pretty': False,
   'dataDir': 'data/arrays',
   'arrayFiles': False
@@ -56,7 +58,7 @@ GET_ENSEMBL_PROBES_DEFAULTS = {
   #max # lines to work with in files at once. tweak according to memory.
   'chunksize': 50000,
   'dataDir': 'data',
-  'organism': 'homo_sapiens_funcgen_111_38',
+  'organism': f'homo_sapiens_funcgen_{PROBE_ENSEMBL_VERSION}_38',
   'output': 'data/probes.bed',
   'forceCurrentSchema': False,
   'fileTypes': ['array', 'array_chip', 'coord_system', 'probe', 'probe_set',
@@ -80,7 +82,7 @@ PARSE_GEO_DATASERIES_DEFAULTS = {
   'dataDir': 'data/matrices',
   'outDir': 'data/results',
   'lncrnaFile': 'data/lncrnas.bed',
-  'organism': 'homo_sapiens_funcgen_111_38',
+  'organism': f'homo_sapiens_funcgen_{PROBE_ENSEMBL_VERSION}_38',
   'completedFilesFile': 'data/results/expressed_series/completed_files.txt'
 }
 
@@ -126,7 +128,6 @@ GREETER_TEXT = '<h3>Introduction</h3><p>ExpressionLncr is designed to help you i
 #    '<a href="https://toolshed.g2.bx.psu.edu/view/genapha/expressionlncr/MY_HASH">' + \
 #    'https://toolshed.g2.bx.psu.edu/view/genapha/expressionlncr/MY_HASH</a></p>'
 
-CHOOSER_DEFAULT_FILE = '(select a file)'
 CHOOSER_BUTTON_MSG = 'Select...'
 CHOOSER_SAVE_BUTTON_MSG = 'Save as...'
 CHOOSER_TITLE = 'Open file...'
@@ -174,26 +175,6 @@ LNCRNA_SOURCE_ITEMS = {
   'custom': 'Custom BED file'
 }
 
-#not used if get_ensembl_funcgen_organisms.py works
-# Note: Ensembl version vXX / organism reference version AA.BB
-PROBE_ENSEMBL_VERSION = 90
-PROBE_ENSEMBL_ORGANISMS = {
-  'caenorhabditis_elegans_funcgen_90_250': 'Caenorhabditis elegans v90/25.0 (C. elegans)',
-  'canis_lupus_familiaris_funcgen_90_31': 'Canis lupus familiaris v90/3.1 (Dog)',
-  'ciona_intestinalis_funcgen_90_3': 'Ciona intestinalis v90/3 (C. intestinalis)',
-  'danio_rerio_funcgen_90_10': 'Danio rerio v90/10 (Zebrafish)',
-  'drosophila_melanogaster_funcgen_90_6': 'Drosophila melanogaster v90/6 (Fruit fly)',
-  'gallus_gallus_funcgen_90_5': 'Gallus gallus v90/5 (Chicken)',
-  'homo_sapiens_funcgen_90_38': 'Homo sapiens v90/38 (Human)',
-  'macaca_mulatta_funcgen_90_801': 'Macaca mulatta v90/8.0.1 (Rhesus macaque)',
-  'mus_musculus_funcgen_90_38': 'Mus musculus v90/38 (Mouse)',
-  'ornithorhynchus_anatinus_funcgen_90_1': 'Ornithorhynchus anatinus v90/1 (Platypus)',
-  'oryctolagus_cuniculus_funcgen_90_2': 'Oryctolagus cuniculus v90/2 (European rabbit)',
-  'pan_troglodytes_funcgen_90_214': 'Pan troglodytes v90/2.1.4 (Chimp)',
-  'rattus_norvegicus_funcgen_90_6': 'Rattus norvegicus v90/6 (Rat)',
-  'saccharomyces_cerevisiae_funcgen_90_4': 'Saccharomyces cerevisiae v90/4 (Yeast)',
-  'sus_scrofa_funcgen_90_111': 'Sus scrofa v90/11.1 (Wild boar)',
-}
 PROBE_TAB_LABEL = '&probe import'
 PROBE_TITLE = '<h3>Get Ensembl expression probes</h3>'
 PROBE_SUBTITLE = '<p>This form downloads information on Ensembl ' + \
@@ -209,7 +190,7 @@ PROBE_REFRESH_BUTTON_MSG = 'Refresh'
 OVERLAP_TAB_LABEL = '&overlap'
 OVERLAP_TITLE = '<h3>Get lncRNA/probe overlap</h3>'
 OVERLAP_SUBTITLE = '<p>This form computes the overlap between the previous ' + \
-    ' lncRNAs and Ensembl expression probe, and exports the results to an XML file ' + \
+    ' lncRNAs and Ensembl expression probes, and exports the results to an XML file ' + \
     ' for further steps.</p>'
 OVERLAP_INPUT_A_MSG = 'Input A'
 OVERLAP_INPUT_B_MSG = 'Input B'

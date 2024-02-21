@@ -13,6 +13,7 @@ from PySide6 import QtGui as qtg
 
 import forms
 import constants as c
+from get_ensembl_funcgen_organisms import prettifyOrganism
 
 
 class App(qtw.QWidget):
@@ -73,7 +74,7 @@ class App(qtw.QWidget):
       'lncrnaOrganism': c.LNCRNA_NONCODE_ORGANISMS[c.GET_LNCRNA_DEFAULTS['organism']],
       'lncrnaOutput': c.GET_LNCRNA_DEFAULTS['output'],
       'lncrnaSourceFile': None,
-      'probeOrganism': c.PROBE_ENSEMBL_ORGANISMS[c.GET_ENSEMBL_PROBES_DEFAULTS['organism']],
+      'probeOrganism': prettifyOrganism(c.GET_ENSEMBL_PROBES_DEFAULTS['organism']),
       'probeDataDir': c.GET_ENSEMBL_PROBES_DEFAULTS['dataDir'],
       'probeOutput': c.GET_ENSEMBL_PROBES_DEFAULTS['output'],
       'overlapInputA': c.FIND_OVERLAP_DEFAULTS['inputA'],
@@ -81,7 +82,7 @@ class App(qtw.QWidget):
       'overlapOutputA': c.FIND_OVERLAP_DEFAULTS['outputA'],
       'overlapOutputB': c.FIND_OVERLAP_DEFAULTS['outputB'],
       'overlapOutputXml': c.FIND_OVERLAP_DEFAULTS['output'],
-      'expressionOrganism': c.PROBE_ENSEMBL_ORGANISMS[c.FIND_GEO_DATASERIES_DEFAULTS['organism']],
+      'expressionOrganism': prettifyOrganism(c.FIND_GEO_DATASERIES_DEFAULTS['organism']),
       'expressionInputF': c.FIND_OVERLAP_DEFAULTS['outputB'],
       'expressionOutDir': c.GET_GEO_DATASERIES_DEFAULTS['output'],
       'expressionSearchTerms': c.FIND_GEO_DATASERIES_DEFAULTS['searchTerms'],
