@@ -17,6 +17,7 @@ def simpleDownload(url, output, force=False):
   if not force and os.path.isfile(output):
     print(f'Output file {output} already exists, skipping download ...', file=sys.stdout)
     return
+  print(f'Downloading {url} to {output} ...')
   #download the whole file into memory
   user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
   headers = {'User-Agent': user_agent} 
