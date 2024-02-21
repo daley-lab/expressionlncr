@@ -66,14 +66,14 @@ def getGplsFromEnsemblOrganismData(organism, dataDir):
 #get gpl from manual curation stored in class.
 #note gpls returned in format 'GPL123' or 'GPL123,GPL456'.
 #returns [] if failed.
-#expects organism to be like 'homo_sapiens_funcgen_85_38' or 'homo_sapiens_funcgen'
+#expects organism to be like 'homo_sapiens_funcgen_85_38' or 'homo_sapiens_funcgen' or 'homo_sapiens'
 def getGplsFromEnsemblArrayName(organism, array):
   #cut off version number from the for ex. "homo_sapiens_funcgen_85_38" string
   # bc the keys are version independent (homo_sapiens_funcgen) in the map.
-  keyword = 'funcgen'
+  keyword = '_funcgen'
   keywordIndex = organism.find(keyword)
   if keywordIndex >= 0:
-    organismKey = organism[:keywordIndex+len(keyword)]
+    organismKey = organism[:keywordIndex]
   else:
     organismKey = organism
   #could fail on a key not found exception if an organism 

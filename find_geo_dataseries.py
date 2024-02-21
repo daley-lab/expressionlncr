@@ -140,7 +140,7 @@ def searchForAllDataSetSeries(organism, searchTerms, esearchFile, esummaryFile):
 def usage(defaults):
   print('Usage: ' + sys.argv[0] + \
       ' -o, --organism <STRING> -d, --data-dir <DIRECTORY> -t, --search-terms <STRING> -p, --get-platforms-from-overlap <PROBE_OVERLAP_FILE> --esearch <ESEARCH_OUTPUT> --esummary <ESUMMARY_OUTPUT> --series-output <SERIES_IDS_OUTPUT> --info-output <SUMMARY_INFO_OUTPUT>')
-  print('Example: ' + sys.argv[0] + ' -o homo_sapiens_funcgen -t "asthma"')
+  print('Example: ' + sys.argv[0] + ' -o homo_sapiens -t "asthma"')
   print('Defaults:')
   for key, val in sorted(iter(defaults.items()), key=operator.itemgetter(0)):
     print(str(key) + ' - ' + str(val))

@@ -28,11 +28,11 @@
 
 
 ORG_TO_ARRAY_TO_GPL = {
-  'bos_taurus_funcgen': {
+  'bos_taurus': {
     'GPL2112': 'Bovine'
   },
 
-  'caenorhabditis_elegans_funcgen': {
+  'caenorhabditis_elegans': {
     'C_elegans': 'GPL200',
     'GPL9450':  'GPL9450',
     'WUSTL-C_elegans':  '',
@@ -48,16 +48,16 @@ ORG_TO_ARRAY_TO_GPL = {
     'GPL8673':  'GPL8673'
   },
 
-  'canis_familiaris_funcgen': {
+  'canis_familiaris': {
     'Canine_2': 'GPL3738'
   },
 
-  'ciona_intestinalis_funcgen': {
+  'ciona_intestinalis': {
     'CINT06a520380F': ''
   },
 
   #*agilent arrays gpls are for probe name / feature #
-  'danio_rerio_funcgen': {
+  'danio_rerio': {
     'Zebrafish': 'GPL1319',
     'G2518A': 'GPL7244,GPL2878',
     'G2519F': 'GPL7302,GPL6563',
@@ -66,12 +66,12 @@ ORG_TO_ARRAY_TO_GPL = {
     'MattArray': '',
   },
 
-  'drosophila_melanogaster_funcgen': {
+  'drosophila_melanogaster': {
     'DrosGenome1': 'GPL72',
     'Drosophila_2': 'GPL1322'
   },
 
-  'gallus_gallus_funcgen': {
+  'gallus_gallus': {
     'Chicken': 'GPL3213'
   },
 
@@ -79,7 +79,7 @@ ORG_TO_ARRAY_TO_GPL = {
   #*note agilent sureprint probe name version / feature number version (that order)
   #*note hugene gene / exon version (that order)
   #*note HTA-2_0 gene / exon version (that order)
-  'homo_sapiens_funcgen': {
+  'homo_sapiens': {
     'HumanWG_6_V2': 'GPL6102',
     'HumanWG_6_V3': 'GPL6884',
     'HuEx-1_0-st-v2': 'GPL5188,GPL5175',
@@ -116,7 +116,7 @@ ORG_TO_ARRAY_TO_GPL = {
     'HTA-2_0':  'GPL17586,GPL17585',
   },
 
-  'macaca_mulatta_funcgen': {
+  'macaca_mulatta': {
     'Rhesus': 'GPL3535'
   },
 
@@ -125,7 +125,7 @@ ORG_TO_ARRAY_TO_GPL = {
   #*mogene-2_1-st-v1 gpls are for gene / exon vs, resp
   #*sureprint_G3_GE_8x60k gpls are for probe name / feature # vs, resp
   #*wholegenome_4x44k_v1 and v2 gpls are probe name / feature # vs, resp
-  'mus_musculus_funcgen': {
+  'mus_musculus': {
     'MoGene-1_0-st-v1': 'GPL6246',
     'MG-U74A': 'GPL32',
     'MG-U74Av2': 'GPL81',
@@ -149,18 +149,18 @@ ORG_TO_ARRAY_TO_GPL = {
     'MoGene-2_1-st-v1': 'GPL17400,GPL20041'
   },
 
-  'ornithorhynchus_anatinus_funcgen': {
+  'ornithorhynchus_anatinus': {
     'platypus_exon': ''
   },
 
-  'oryctolagus_cuniculus_funcgen': {
+  'oryctolagus_cuniculus': {
     'SurePrint_GPL16709_4x44k': 'GPL16709',
     'SurePrint_GPL7083_4x44k': 'GPL7083'
   },
 
   #*assuming chimp just uses regular human arrays 
   #*huex-1_0-st-v2 gpls are exon / gene version, resp 
-  'pan_troglodytes_funcgen': {
+  'pan_troglodytes': {
     'HuEx-1_0-st-v2': 'GPL5188,GPL5175',
     'HC-G110': 'GPL74',
     'HG-Focus': 'GPL201',
@@ -187,7 +187,7 @@ ORG_TO_ARRAY_TO_GPL = {
   #*agilent wholegenome_4x44k_v1 gpls are for feature # / probe name vs, resp
   #*agilent wholegenome_4x44k_v3 gpls are for probe name / feature #, resp
   #*Affymetrix RaGene-2_1-st-v1 gpl is for transcript (gene) version
-  'rattus_norvegicus_funcgen': {
+  'rattus_norvegicus': {
     'RAE230A': 'GPL341',
     'RAE230B': 'GPL342',
     'RG-U34A': 'GPL85',
@@ -207,17 +207,17 @@ ORG_TO_ARRAY_TO_GPL = {
     'RaGene-2_1-st-v1': 'GPL19271'
   },
 
-  'saccharomyces_cerevisiae_funcgen': {
+  'saccharomyces_cerevisiae': {
     'Yeast_2': 'GPL2529',
     'YG-S98': 'GPL90'
   },
 
   #*only old Affymetrix Porcine expression array in GEO. Called "Affymetrix Porcine Genome Array".
-  'sus_scrofa_funcgen': {
+  'sus_scrofa': {
     'Porcine': 'GPL3533'
   },
 
-  'xenopus_tropicalis_funcgen': {
+  'xenopus_tropicalis': {
     'X_tropicalis': 'GPL10263'
   }
 }
