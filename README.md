@@ -116,7 +116,7 @@ You can also choose to limit to --chromosome to speed things up.
 
 Searches for relevant GEO platforms, ones with array probes overlapping the data/probes.overlap.bed file via the NCBI Entrez E-Utils.
 
-Then, it looks for human (or --organism if you've been specifying an Ensembl alternative the whole time) GEO DataSets from the NCBI GDS database according to a --search-terms string. This search terms string should be the same format as the regular GEO terms constructed by the "Advanced Search Builder" on the GEO website, with one caveat. It must not specify the following terms since they're already specified in the tool: [Organism], [Entry Type], [GEO Acession].
+Then, it looks for human (or --organism if you've been specifying an Ensembl alternative the whole time) GEO DataSets from the NCBI GDS database according to a --search-terms string. This search terms string should be the same format as the regular GEO terms constructed by the "Advanced Search Builder" on the GEO website, with one caveat. It must not specify the following terms since they're already specified in the tool: [Organism], [Entry Type], [GEO Accession].
 
 I recommend crafting a relevant set of terms that cuts down the search space to only useful samples. In fact, the tool forces this on you to an extent by always specifying "GDS[Entry Type]" to restrict to curated GEO DataSets. (But this is not an artificial limitation: GEO DataSets always have the series matrix annotation files which are needed in the pipeline.)
 
