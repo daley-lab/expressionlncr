@@ -573,11 +573,6 @@ def __main__():
     funcgenFiles = getFuncgenFiles(organism, dataDir, fileTypes, cleanUp)
   else:
     print('Skipping download of Ensembl Funcgen files ...')
-  #NOTE the following funcgenFiles definition is for testing purposes 
-  # (since download and extract takes a while)
-  #funcgenFiles = {}
-  #for fileType in fileTypes:
-  #  funcgenFiles[fileType] = 'data/%s.txt' % fileType
   #get current coordinate system id corresponding to chromosomes
   print('Start coord system time: ' + str(datetime.datetime.now()))
   coordSystemId = getCoordSystemId(funcgenFiles['coord_system'], schemaBuild, forceCurrentSchema)
@@ -606,7 +601,7 @@ def __main__():
         output, organism)
   print('Done get_ensembl_probes @ time: ' + str(datetime.datetime.now()))
   print('If you wish to sort the BED file by chromosome and start pos, try running:\n')
-  print('\tsort -k1,1 -k2,2n %s > data/sorted.bed\n' % output)
+  print('\tsort -k1,1 -k2,2n %s > data/probes.sorted.bed\n' % output)
 
 if __name__ == '__main__':
   __main__()

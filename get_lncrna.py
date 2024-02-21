@@ -88,6 +88,8 @@ def __main__():
     getNoncode(organism, noncodeVersion, output)
   else:
     shutil.copy(bedInput, output)
+  print('If you wish to sort the BED file by chromosome and start pos, try running:\n')
+  print('\tsort -k1,1 -k2,2n %s > data/lncrna.sorted.bed\n' % output)
 
 if __name__ == '__main__':
   __main__()
