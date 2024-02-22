@@ -17,7 +17,8 @@ from PySide6 import QtGui as qtg
 
 import constants as c
 import gui_job as job
-import get_ensembl_funcgen_organisms as org
+import get_ensembl_funcgen_organisms as funcgen
+import org_array_gpl as org
 
 
 # Need to convert unicode pretty print organism back to Ensembl funcgen database organism key.
@@ -373,7 +374,7 @@ class ProbeForm(GuiForm):
     else:
       availableOrganismsFileName = d['output']
     normalized = os.path.normpath(availableOrganismsFileName)
-    self.availableOrganisms = org.parseFtpIndexForOrganisms(
+    self.availableOrganisms = funcgen.parseFtpIndexForOrganisms(
       url=d['url'], output=normalized, dataDir=self.dataDir, force=force
     )
     if self.availableOrganisms:
@@ -518,6 +519,7 @@ class ExpressionForm(GuiForm):
     #search form
     searchLayout = qtw.QFormLayout()
     self.organism = ComboBox()
+    self.organism.addItems(sorted(org.ORG_NAMES))
     self.searchTerms = qtw.QTextEdit()
     #TODO add default italicised, light grey example for search terms field
     self.searchButton = qtw.QPushButton(c.EXPRESSION_SEARCH_BUTTON_MSG)
