@@ -59,7 +59,7 @@ import sys
 import xml.etree.cElementTree as cet
 
 #local
-from beans import ChromFeature, Probe, ProbeExpression
+import beans
 import constants as c
 import downloader
 import find_geo_platforms as plat
@@ -73,7 +73,7 @@ def parseFileNames(completedFilesFile):
       fileNames.add(line.strip())
   return fileNames
 
-def parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFilesFile, reverseOverlapFile=False):
+def parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFilesFile, reverseOverlapFile=False, redo=False):
   print('Parsing data started @ %s...' % str(datetime.datetime.now()))
   #read in overlap file and make map of lncrna -> probe
   print('Reading in lncrna/probe overlap file %s ...' % overlapFile)
@@ -103,15 +103,16 @@ def parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFiles
                     )]
   #check which series have already been parsed
   completedFiles = set()
-  try:
-    completedFiles = parseFileNames(completedFilesFile)
-  except IOError:
-    #no existing file, create
-    print('No completed files file %s, creating ...' % completedFilesFile)
-    with open(completedFilesFile, 'w') as cff:
-      cff.write('')
-  if len(completedFiles) > 0:
-    print('Skipping parsing for following files (already complete): %s ...' % (','.join(completedFiles)))
+  if not redo:
+    try:
+      completedFiles = parseFileNames(completedFilesFile)
+    except IOError:
+      #no existing file, create
+      print('No completed files file %s, creating ...' % completedFilesFile)
+      with open(completedFilesFile, 'w') as cff:
+        cff.write('')
+    if len(completedFiles) > 0:
+      print('Skipping parsing for following files (already complete): %s ...' % (','.join(completedFiles)))
   #parse all files that haven't been already
   filesToParse = set(matrixFileNames).difference(completedFiles)
   with open(completedFilesFile, 'a') as completeFile:
@@ -121,10 +122,10 @@ def parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFiles
     # any lncrna/expression results to file
     for fileName in sorted(filesToParse):
       count += 1
-      print(' > parsing file (%s/%s): %s @ %s' % (count, numFiles, fileName, str(datetime.datetime.now())))
+      print(' > Parsing file (%s/%s): %s @ %s' % (count, numFiles, fileName, str(datetime.datetime.now())))
       try:
         #create map of GPL -> probeSet -> probeName -> list(tuple(max probe val among samples, GSE))
-        with gzip.open(fileName, 'r') as matrixFile:
+        with gzip.open(fileName, 'rt') as matrixFile:
           expressionMap = parseSeriesDataMatrix(matrixFile)
         #write lncrna expression to file
         lncrnaExpressionMap = getLncrnaExpressionMap(overlapMap, expressionMap, organism)
@@ -226,14 +227,14 @@ def getLncrnaExpressionMap(overlapMap, expressionMap, organism):
           try:
             probeSeriesMaxVals = expressionMap[gpl.upper()][probeSet.upper()][probeName.upper()]
             for (gse, maxVal) in probeSeriesMaxVals:
-              probe = Probe(
+              probe = beans.Probe(
                 probeId=None,
                 probeSetName=probeSet,
                 name=probeName,
                 arrayChipId=None,
                 arrayName=array
               )
-              probeExpression = ProbeExpression(
+              probeExpression = beans.ProbeExpression(
                 probe=probe,
                 probeChromFeat=probeChromFeat,
                 gpl=gpl,
@@ -259,7 +260,7 @@ def writeExpressedLncrnas(lncrnaExpressionMap, expressedLncrnasFile):
       #for each set of probe expressions for a lncrna find out if any are expression > 0.
       #write out to appropriate output file.
       #note: lncrna is a ChromFeature bean
-      for (lncrnaBean, probeExpressions) in sorted(lncrnaExpressionMap.items()):
+      for (lncrnaBean, probeExpressions) in sorted(lncrnaExpressionMap.items(), key=lambda x: x[0].name):
         #we have new expression
         if probeExpressions and len(probeExpressions) > 0:
           probeColString = ''
@@ -373,13 +374,16 @@ def parseSeriesDataMatrix(matrixFile):
   gpl = None
   for line in matrixFile:
     #get the GSE, series accession
-    if line.startswith('!Series_geo_accession'):
+    if line.lower().startswith('!series_geo_accession'):
       gse = line.replace('"', '').split('\t')[1].strip().upper()
-      print(' > got %s' % gse)
+      print(' > Got %s' % gse)
     #get the GPL, series platform accession
-    if line.startswith('!Series_platform_id'):
+    if line.lower().startswith('!series_platform_id'):
       gpl = line.replace('"', '').split('\t')[1].strip().upper()
-      print(' > got %s' % gpl)
+      print(' > Got %s' % gpl)
+    if line.lower().startswith('!series_matrix_table_end'):
+      readTableRow = False
+      continue
     if readTableRow:
       #read in a row of the table. (probeSet/)probeName\tsample1Val\tsample2Val ...
       cols = line.replace('"', '').split('\t')
@@ -393,9 +397,14 @@ def parseSeriesDataMatrix(matrixFile):
       #get maximum expression at this probe among all samples in this series
       maxVal = -1
       for val in cols[1:]:
-        stripped = val.strip()
-        if stripped > maxVal:
-          maxVal = stripped
+        try:
+          stripped = val.strip()
+          currentVal = float(stripped)
+          if currentVal > maxVal:
+            maxVal = currentVal
+        except Exception:
+          print(f'Warning: probe expression value is NaN in {matrixFile}/{gpl}/{probeSet}/{probeName}: {val}', file=sys.stderr)
+          pass
       #set the expression map for this probe.
       #initialise keys as necessary.
       try:
@@ -419,16 +428,13 @@ def parseSeriesDataMatrix(matrixFile):
       #ignore the header line for now. queue up read table row on next row.
       readTableRow = True
       continue
-    if line.startswith('!series_matrix_table_begin'):
+    if line.lower().startswith('!series_matrix_table_begin'):
       #double-check that we got both the gse and gpl which are to be keys 
       # for probe expression map
       if not gse or not gpl:
         print('Malformed series data matrix file: %s' % matrixFile, file=sys.stderr)
         break
       readTableHeader = True
-      continue
-    if line.startswith('!series_matrix_table_end'):
-      readTableRow = False
       continue
   return expressionMap
 
@@ -477,7 +483,7 @@ def getChromFeature(element):
   stop = element.find('stop').text
   strand = element.find('strand').text
   name = element.find('name').text
-  feat = ChromFeature(chrom, start, stop, strand, name)
+  feat = beans.ChromFeature(chrom, start, stop, strand, name)
   return feat
 
 def parseLncrnasFromBed(lncrnaFile):
@@ -492,7 +498,7 @@ def parseLncrnasFromBed(lncrnaFile):
         lncrna = cols[nameCol]
         lncrnaList.append(lncrna)
   except Exception:
-    print('Error parsing file %s for lncRNAs. Output file of lncRNAs not found to ooverlap with probes will be missing!' % lncrnaFile, file=sys.stderr)
+    print('Error parsing file %s for lncRNAs. Output file of lncRNAs not found to overlap with probes will be missing!' % lncrnaFile, file=sys.stderr)
   return lncrnaList
 
 def getNonOverlappingLncnras(lncrnaList, overlapMap):
@@ -507,9 +513,9 @@ def getNonOverlappingLncnras(lncrnaList, overlapMap):
   numLncrnas = len(lncrnaList)
   numOverlapping = len(list(overlapMap.keys()))
   numNonOverlapping = len(nonOverlappingLncrnas)
-  print('# lncrnas: %s' % numLncrnas)
-  print('# overlapping lncrnas: %s' % numOverlapping)
-  print('# non-overlapping lncrnas: %s' % numNonOverlapping)
+  print('# lncRNAs: %s' % numLncrnas)
+  print('# Overlapping lncRNAs: %s' % numOverlapping)
+  print('# Non-Overlapping lncRNAs: %s' % numNonOverlapping)
   if (numOverlapping + numNonOverlapping) != numLncrnas:
     print('Warning: number of lncRNAs in getNonOverlappingLncrnas did not add up!')
   return nonOverlappingLncrnas
@@ -523,8 +529,8 @@ def usage(defaults):
     print(str(key) + ' - ' + str(val))
 
 def __main__():
-  shortOpts = 'hvf:d:o:l:r:c:'
-  longOpts = ['help', 'overlap-file=', 'reverse-overlap', 'data-dir=', 'out-dir=', 'lncrna-file=', 'organism=', 'completed-files-file=']
+  shortOpts = 'hvf:d:o:l:r:c:R'
+  longOpts = ['help', 'overlap-file=', 'reverse-overlap', 'data-dir=', 'out-dir=', 'lncrna-file=', 'organism=', 'completed-files-file=', 'redo']
   defaults = c.PARSE_GEO_DATASERIES_DEFAULTS
   overlapFile = defaults['overlapFile']
   reverseOverlapFile = defaults['reverseOverlapFile']
@@ -533,6 +539,7 @@ def __main__():
   lncrnaFile = defaults['lncrnaFile']
   organism = defaults['organism']
   completedFilesFile = defaults['completedFilesFile']
+  redo = defaults['redoCompleted']
   try:
     opts, args = getopt.getopt(sys.argv[1:], shortOpts, longOpts)
   except getopt.GetoptError as err:
@@ -546,7 +553,7 @@ def __main__():
     elif opt in ('-f', '--overlap-file'):
       overlapFile = arg
     elif opt in ('-v', '--reverse-overlap'):
-      reverseOverlapFile = arg
+      reverseOverlapFile = True
     elif opt in ('-d', '--data-dir'):
       dataDir = arg
     elif opt in ('-o', '--out-dir'):
@@ -557,7 +564,9 @@ def __main__():
       organism = arg
     elif opt in ('-c', '--completed-files-file'):
       completedFilesFile = arg
-  parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFilesFile, reverseOverlapFile)
+    elif opt in ('-R', '--redo'): # Force redoing completed file parsing
+      redo = True
+  parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFilesFile, reverseOverlapFile, redo)
 
 if __name__ == '__main__':
   __main__()

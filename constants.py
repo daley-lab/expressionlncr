@@ -84,7 +84,8 @@ PARSE_GEO_DATASERIES_DEFAULTS = {
   'outDir': 'data/results',
   'lncrnaFile': 'data/lncrnas.bed',
   'organism': 'homo_sapiens',
-  'completedFilesFile': 'data/results/expressed_series/completed_files.txt'
+  'completedFilesFile': 'data/results/expressed_series/completed_files.txt',
+  'redoCompleted': False
 }
 
 GET_LNCRNA_DEFAULTS = {

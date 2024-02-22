@@ -2,8 +2,10 @@
 # Some complex data types for the scripts
 
 import sys
+from dataclasses import dataclass
 
 
+'''
 class Probe(object):
   def __init__(self, probeId=None, probeSetName=None, name=None, arrayChipId=None, arrayName=None):
     self.probeId = probeId
@@ -11,17 +13,17 @@ class Probe(object):
     self.name = name
     self.arrayChipId = arrayChipId
     self.arrayName = arrayName
+'''
+@dataclass(frozen=True)
+class Probe:
+  probeId: str = None
+  probeSetName: str = None
+  name: str = None
+  arrayChipId: str = None
+  arrayName: str = None
 
 
-class ProbeExpression(object):
-  def __init__(self, probe=None, probeChromFeat=None, gpl=None, gse=None, maxVal=None):
-    self.probe = probe
-    self.probeChromFeat = probeChromFeat
-    self.gpl = gpl
-    self.gse = gse
-    self.maxVal = maxVal
-
-
+'''
 class ChromFeature(object):
   def __init__(self, chrom=None, start=None, stop=None, strand=None, name=None):
     self.chrom = chrom
@@ -54,6 +56,32 @@ class ChromFeature(object):
     string = '%s\t%s\t%s\t%s\t0\t%s' % (str(self.chrom), str(self.start), \
         str(self.stop), str(self.name), str(self.strand))
     return string
+'''
+@dataclass(frozen=True)
+class ChromFeature:
+  chrom: str = None
+  start: str = None
+  stop: str = None
+  strand: str = None
+  name: str = None
+
+
+'''
+class ProbeExpression(object):
+  def __init__(self, probe=None, probeChromFeat=None, gpl=None, gse=None, maxVal=None):
+    self.probe = probe
+    self.probeChromFeat = probeChromFeat
+    self.gpl = gpl
+    self.gse = gse
+    self.maxVal = maxVal
+'''
+@dataclass(frozen=True)
+class ProbeExpression:
+  probe: str = None
+  probeChromFeat: ChromFeature = None
+  gpl: str = None
+  gse: str = None
+  maxVal: float = None
 
 
 class Nestable(object):
@@ -78,6 +106,13 @@ def __main__(argv):
   matchA = Nestable()
   matchA.parent = featA
   matchA.children[featB.name] = featB
+  print(probeA)
+  print(probeB)
+  print(featA)
+  print(featB)
+  print(matchA.parent)
+  print(matchA.children)
+
 
 if __name__ == '__main__':
   __main__(sys.argv)
