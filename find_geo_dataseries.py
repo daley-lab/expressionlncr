@@ -89,21 +89,24 @@ def getSeriesMatrixFileInfo(seriesIds, ftp):
 #NOTE don't have to worry about URL length due to limited number of platforms.
 # human has most and is well below usual ~ 4000 character limit to URL length.
 # (at about ~ 1000 characters.)
-def searchForSeriesInPlatforms(organism, platforms, searchTerms, esearchFile, esummaryFile, gdsOnly=True):
+def searchForSeriesInPlatforms(organismKey, platforms, searchTerms, esearchFile, esummaryFile, gdsOnly=True):
   seriesIds = []
   if not platforms:
     return seriesIds
-  #convert organism name like 'homo_sapiens_funcgen_85_38' to 'Homo sapiens'
+  #convert organism name like 'homo_sapiens_funcgen_85_38' or 'homo_sapiens' to 'Homo sapiens'
   try:
-    keyword = 'funcgen'
-    splat = organism.split('_')
+    keyword = '_funcgen'
+    splat = organismKey.split('_')
     #capitalise the first word
     splat[0] = '%s%s' % (splat[0][0].upper(), splat[0][1:])
     keywordIndex = splat.index(keyword)
-    #make the searchable organism out of the words before the keyword
-    searchableOrg = ' '.join(splat[:keywordIndex])
+    if keywordIndex and keywordIndex >= 0:
+      #make the searchable organism out of the words before the keyword
+      searchableOrg = ' '.join(splat[:keywordIndex])
+    else:
+      searchableOrg = ' '.join(splat)
   except Exception:
-    searchableOrg = organism
+    searchableOrg = organismKey
   #now construct the search term
   database = 'gds'
   accessionType = 'GSE'  #corresponds to the <GSE> tag in XML output not [Entry Type] in search
