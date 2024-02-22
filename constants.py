@@ -11,7 +11,7 @@ PROBE_ENSEMBL_VERSION = 90 # v90 last release before changes to schema
 
 FIND_GEO_DATASERIES_DEFAULTS = {
   'ftp': 'ftp://ftp.ncbi.nlm.nih.gov/geo/series',
-  'organism': f'homo_sapiens_funcgen_{PROBE_ENSEMBL_VERSION}_38',
+  'organism': 'Homo sapiens',
   'dataDir': 'data',
   'seriesOutput': 'data/matrices/series.txt', 
   'infoOutput': 'data/matrices/summary.txt', 
@@ -144,14 +144,14 @@ LNCRNA_NONCODE_ORGANISMS = {
   'rn6' : 'Rattus norvegicus (rn6)', # 'Rat (rn6)',
   'galGal4' : 'Gallus gallus (galGal4)', # 'Chicken (galGal4)',
   'ce10' : 'Caenorhabditis elegans (ce10)', # 'C. Elegans (ce10)',
-  'dm6' : 'Drosophila melanogaster (dm6)', # 'D. Melanogaster (dm6)',
+  'dm6' : 'Drosophila melanogaster (dm6)', # 'Fruit fly (dm6)',
   'danRer10' : 'Danio rerio (danRer10)', # 'Zebrafish (danRer10)',
   'tair10' : 'A. Thaliana (tair10)',
   'sacCer3' : 'Saccharomyces cerevisiae (sacCer3)', # 'Yeast (sacCer3)',
   'panTro4' : 'Pan troglodytes (panTro4)', # 'Chimp (panTro4)',
   'gorGor3' : 'Gorilla (gorGor3)',
   'ponAbe2' : 'Orangutan (ponAbe2)',
-  'rheMac3' : 'Macaca mulatta (rheMac3)', # 'Rhesus (rheMac3)',
+  'rheMac3' : 'Macaca mulatta (rheMac3)', # 'Rhesus macaque (rheMac3)',
   'monDom5' : 'Opossum (monDom5)',
   'ornAna1' : 'Ornithorhynchus anatinus(ornAna1)' # 'Platypus (ornAna1)'
 }
