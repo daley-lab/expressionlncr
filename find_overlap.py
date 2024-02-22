@@ -477,7 +477,7 @@ def __main__():
   if len(args) > 0 and output == defaults['output']:
     #only assume first argument is output if user didn't specify an --output arg
     output = args[0]
-  print('Getting overlap b/w BED files @ time: ' + str(datetime.datetime.now()))
+  print('Getting overlap between BED files @ time: ' + str(datetime.datetime.now()))
   if pandasPipeline:
     print('Using pandas pipeline')
     #a non-object oriented pipeline in pandas. unfortunately, much slower atm.

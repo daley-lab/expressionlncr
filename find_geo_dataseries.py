@@ -92,6 +92,7 @@ def getSeriesMatrixFileInfo(seriesIds, ftp):
 def searchForSeriesInPlatforms(organismKey, platforms, searchTerms, esearchFile, esummaryFile, gdsOnly=True):
   seriesIds = []
   if not platforms:
+    print('Warning: No platforms to retrieve series IDs for')
     return seriesIds
   #convert organism name like 'homo_sapiens_funcgen_85_38' or 'homo_sapiens' to 'Homo sapiens'
   try:
@@ -124,7 +125,7 @@ def searchForSeriesInPlatforms(organismKey, platforms, searchTerms, esearchFile,
   #trim off the final OR
   terms = terms[:-len(orTerm)]
   terms += ')'
-  #print 'constructed search terms %s' % terms
+  print(f'Constructed search terms {terms}')
   seriesIds = ncbitools.getAccessionsFromSearch(database, accessionType, \
       terms, esearchFile, esummaryFile)
   return seriesIds
@@ -213,13 +214,16 @@ def __main__():
     print('Getting relevant GEO platforms ...')
     probeOverlapFile = getPlatformsFromOverlap
     arrays = getArraysFromProbeOverlapBed(probeOverlapFile)
+    print(f'Found {len(arrays) or 0} arrays from probe overlap BED file')
     platforms = set([])
     for array in arrays:
       for gpl in plat.getGplsFromEnsemblArrayName(organism, array):
-        platforms.append(gpl)
+        platforms.add(gpl)
+    print(f'Found corresponding GEO Platforms: {platforms}')
   #search for all geo data series ids corresponding to a set of search terms
   print('Searching GEO for data series with parameters...')
   print(' Organism: %s' % organism)
+  print(f' Platforms: {platforms}')
   print(' Search Terms: %s' % searchTerms)
   print(' eSearch output file: %s' % esearch)
   print(' eSummary output file: %s' % esummary)
