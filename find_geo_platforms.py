@@ -51,11 +51,11 @@ def searchForPlatforms(organism, title, esearchFile, esummaryFile):
 #organism - the ensembl funcgen organism name like homo_sapiens_funcgen_84_38
 #dataDir - the directory with the downloaded Ensembl funcgen files, particularly array.txt.gz
 # and array_chip.txt.gz
-def getGplsFromEnsemblOrganismData(organism, dataDir):
+def getGplsFromEnsemblOrganismData(organismKey, dataDir):
   arrayChipMap = getEnsemblArraysFromFile(dataDir)
   gpls = set([])
   for (id_, array) in arrayChipMap.items():
-    arrayGpls = getGplsFromEnsemblArrayName(organism, array)
+    arrayGpls = getGplsFromEnsemblArrayName(organismKey, array)
     #where multiple GPLs correspond to an array returned as 'GPL123,GPL234'.
     # can be split for our purposes here.
     if arrayGpls:
@@ -67,19 +67,19 @@ def getGplsFromEnsemblOrganismData(organism, dataDir):
 #note gpls returned in format 'GPL123' or 'GPL123,GPL456'.
 #returns [] if failed.
 #expects organism to be like 'homo_sapiens_funcgen_85_38' or 'homo_sapiens_funcgen' or 'homo_sapiens'
-def getGplsFromEnsemblArrayName(organism, array):
+def getGplsFromEnsemblArrayName(organismKey, array):
   #cut off version number from the for ex. "homo_sapiens_funcgen_85_38" string
   # bc the keys are version independent (homo_sapiens_funcgen) in the map.
   keyword = '_funcgen'
-  keywordIndex = organism.find(keyword)
+  keywordIndex = organismKey.find(keyword)
   if keywordIndex >= 0:
-    organismKey = organism[:keywordIndex]
+    org = organismKey[:keywordIndex]
   else:
-    organismKey = organism
+    org = organismKey
   #could fail on a key not found exception if an organism 
   # or array is expected to be curated but the curations aren't updated.
   try:
-    gplString = org_array_gpl.ORG_TO_ARRAY_TO_GPL[organismKey][array]
+    gplString = org_array_gpl.ORG_TO_ARRAY_TO_GPL[org][array]
     if not gplString or gplString == '':
       raise
     gpls = set(gplString.split(','))
