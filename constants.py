@@ -79,10 +79,11 @@ GET_GEO_DATASERIES_DEFAULTS = {
 
 PARSE_GEO_DATASERIES_DEFAULTS = {
   'overlapFile': 'data/overlap.xml',
+  'reverseOverlapFile': False,
   'dataDir': 'data/matrices',
   'outDir': 'data/results',
   'lncrnaFile': 'data/lncrnas.bed',
-  'organism': f'homo_sapiens_funcgen_{PROBE_ENSEMBL_VERSION}_38',
+  'organism': 'homo_sapiens',
   'completedFilesFile': 'data/results/expressed_series/completed_files.txt'
 }
 
@@ -196,7 +197,7 @@ OVERLAP_INPUT_A_MSG = 'Input A'
 OVERLAP_INPUT_B_MSG = 'Input B'
 OVERLAP_OUTPUT_A_MSG = 'Output A'
 OVERLAP_OUTPUT_B_MSG = 'Output B'
-OVERLAP_OUTPUT_XML_MSG = 'Combined Output'
+OVERLAP_OUTPUT_XML_MSG = 'Combined Output\n(A -> B)'
 OVERLAP_RUN_BUTTON_MSG = LNCRNA_RUN_BUTTON_MSG
 
 EXPRESSION_TAB_LABEL = '&expression download'
@@ -223,8 +224,9 @@ RESULTS_TITLE = '<h3>Compute results</h3>'
 RESULTS_SUBTITLE = '<p>This form iterates through the downloaded GEO Series, ' + \
     'parsing out expression data for the subset of probes overlapping the given lncRNAs.</p>'
 RESULTS_DATADIR_MSG = 'Series matrices directory'
-RESULTS_OVERLAP_FILE_MSG = 'lncRNA/probe overlap'
+RESULTS_OVERLAP_FILE_MSG = 'lncRNA -> probe overlap'
 RESULTS_OUTPUT_DIR_MSG = 'Output directory'
+RESULTS_REVERSE_OVERLAP_MSG = 'Reversed overlap file?\n(probe -> lncRNA)'
 
 BED_FILE_TYPE = 'BED files (*.bed)'
 TXT_FILE_TYPE = 'Text files (*.txt)'

@@ -73,11 +73,11 @@ def parseFileNames(completedFilesFile):
       fileNames.add(line.strip())
   return fileNames
 
-def parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFilesFile):
+def parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFilesFile, reverseOverlapFile=False):
   print('Parsing data started @ %s...' % str(datetime.datetime.now()))
   #read in overlap file and make map of lncrna -> probe
   print('Reading in lncrna/probe overlap file %s ...' % overlapFile)
-  overlapMap = parseOverlapFile(overlapFile)
+  overlapMap = parseOverlapFile(overlapFile, reverse=reverseOverlapFile)
   if not overlapMap:
     print('Error: could not parse overlap file %s' % overlapFile) 
     return
@@ -114,7 +114,7 @@ def parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFiles
     print('Skipping parsing for following files (already complete): %s ...' % (','.join(completedFiles)))
   #parse all files that haven't been already
   filesToParse = set(matrixFileNames).difference(completedFiles)
-  with open(completedFilesFile, 'ab') as completeFile:
+  with open(completedFilesFile, 'a') as completeFile:
     count = 0
     numFiles = len(filesToParse)
     #for each file create a map of expression in that file then write out 
@@ -134,7 +134,7 @@ def parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFiles
       except Exception as err:
         print(err, file=sys.stderr)
         print('Could not parse series matrix data file: %s' % fileName, file=sys.stderr)
-      completeFile.write('%s\n' % fileName)
+      completeFile.write(f'{fileName}\n')
   #once all the expressed lncrna files for each GEO series are written, 
   # then merge them all  into one expressed lncrna file that the user expects.
   #write header line of expressed lncrnas file once only
@@ -523,10 +523,11 @@ def usage(defaults):
     print(str(key) + ' - ' + str(val))
 
 def __main__():
-  shortOpts = 'hf:d:o:l:r:c:'
-  longOpts = ['help', 'overlap-file=', 'data-dir=', 'out-dir=', 'lncrna-file=', 'organism=', 'completed-files-file=']
+  shortOpts = 'hvf:d:o:l:r:c:'
+  longOpts = ['help', 'overlap-file=', 'reverse-overlap', 'data-dir=', 'out-dir=', 'lncrna-file=', 'organism=', 'completed-files-file=']
   defaults = c.PARSE_GEO_DATASERIES_DEFAULTS
   overlapFile = defaults['overlapFile']
+  reverseOverlapFile = defaults['reverseOverlapFile']
   dataDir = defaults['dataDir']
   outDir = defaults['outDir']
   lncrnaFile = defaults['lncrnaFile']
@@ -544,6 +545,8 @@ def __main__():
       sys.exit()
     elif opt in ('-f', '--overlap-file'):
       overlapFile = arg
+    elif opt in ('-v', '--reverse-overlap'):
+      reverseOverlapFile = arg
     elif opt in ('-d', '--data-dir'):
       dataDir = arg
     elif opt in ('-o', '--out-dir'):
@@ -554,7 +557,7 @@ def __main__():
       organism = arg
     elif opt in ('-c', '--completed-files-file'):
       completedFilesFile = arg
-  parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFilesFile)
+  parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFilesFile, reverseOverlapFile)
 
 if __name__ == '__main__':
   __main__()
