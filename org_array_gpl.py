@@ -222,5 +222,14 @@ ORG_TO_ARRAY_TO_GPL = {
   }
 }
 
+
 # List of organism names like: Sus scrofa, Xenopus tropicalis, etc...
 ORG_NAMES = [o[0].upper() + o[1:].replace('_', ' ') for o in ORG_TO_ARRAY_TO_GPL.keys()]
+
+
+def nameToKey(orgName: str) -> str:
+  '''
+    Converts organism name like Homo sapiens back to homo_sapiens
+  '''
+  key = '_'.join(orgName.lower().split(' '))
+  return key

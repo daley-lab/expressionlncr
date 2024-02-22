@@ -176,6 +176,7 @@ class GuiForm(qtw.QWidget):
     self.jobArgs = self.getJobArgs()
     if not self.jobArgs:
       ErrorMessageBox.show(self, c.ERROR_INVALID_JOB)
+      raise ValueError('No job arguments')
     self.jobType = self.getJobType()
     #call a new gui job process
     print('Job args: %s' % (' '.join(self.jobArgs)))
@@ -568,24 +569,34 @@ class ExpressionForm(GuiForm):
   def onJobFinished(self):
     if self.jobType == job.GuiJob.EXPRESSION_SEARCH:
       #change the search results label to give user feedback.
-      #open the series matrix info file and count up the rows.
-      numLines = 0
-      fileSizeSum = 0
-      prettySum = 'N/A'
-      infoFile = os.path.normpath('%s/%s' % (self.outDir.text(), c.EXPRESSION_DEFAULT_INFO_OUTPUT))
-      print('infoFile opening %s ' % infoFile)
-      with open(infoFile, 'r') as f:
-        reader = csv.reader(f, delimiter='\t')
-        for cols in reader:
-          try:
-            if len(cols) > 1:
-              fileSizeSum += int(cols[1])
-              numLines += 1
-          except Exception:
-            continue
-      if fileSizeSum > 0:
-        prettySum = getHumanReadableSize(fileSizeSum)
-      text = 'Found %s series totalling %s' % (numLines, prettySum)
+      if ' '.join(self.getSearchJobArgs()).index('--skip-series-info'):
+        seriesFile = os.path.normpath('%s/%s' % (self.outDir.text(), c.EXPRESSION_DEFAULT_SERIES_OUTPUT))
+        print(f'Opening series file {seriesFile} ...')
+        with open(seriesFile, 'r') as f:
+          numSeries = len(f.readlines())
+        text = f'Skipped downloading GEO series summary info for {numSeries} series.'
+      else:
+        #open the series matrix info file and count up the rows.
+        numLines = 0
+        fileSizeSum = 0
+        prettySum = 'N/A'
+        infoFile = os.path.normpath('%s/%s' % (self.outDir.text(), c.EXPRESSION_DEFAULT_INFO_OUTPUT))
+        print(f'Opening expression series summary info file {infoFile} ...')
+        with open(infoFile, 'r') as f:
+          reader = csv.reader(f, delimiter='\t')
+          for cols in reader:
+            try:
+              if len(cols) > 1:
+                fileSizeSum += int(cols[1])
+                numLines += 1
+            except Exception:
+              continue
+        if fileSizeSum > 0:
+          prettySum = getHumanReadableSize(fileSizeSum)
+        if numLines > 0 and prettySum:
+          text = 'Found %s series totalling %s.' % (numLines, prettySum)
+        else:
+          text = 'No GEO series summary info found.'
       print(text)
       self.searchResultsMessage.setText(text)
       self.searchButton.setEnabled(False)
@@ -603,14 +614,17 @@ class ExpressionForm(GuiForm):
     infoOutput = c.EXPRESSION_DEFAULT_INFO_OUTPUT
     if not self.dataDir:
       self.dataDir = os.path.normpath(c.GET_ENSEMBL_PROBES_DEFAULTS['dataDir'])
-    jobArgs = ['find_geo_dataseries.py', \
-        '--organism', getOrgKeyFromPrettyUnicode(self.organism.currentText()), \
-        '--data-dir', self.dataDir, \
-        '--esearch', os.path.normpath('%s/%s.esearch' % (self.outDir.text(), infoOutput)), \
-        '--esummary', os.path.normpath('%s/%s.esummary' % (self.outDir.text(), infoOutput)), \
-        '--get-platforms-from-overlap', os.path.normpath(self.inputF.text()), \
-        '--series-output', os.path.normpath('%s/%s' % (self.outDir.text(), seriesOutput)), \
-        '--info-output', os.path.normpath('%s/%s' % (self.outDir.text(), infoOutput))]
+    jobArgs = [
+      'find_geo_dataseries.py', \
+      '--organism', org.nameToKey(self.organism.currentText()), \
+      '--data-dir', self.dataDir, \
+      '--esearch', os.path.normpath('%s/%s.esearch' % (self.outDir.text(), infoOutput)), \
+      '--esummary', os.path.normpath('%s/%s.esummary' % (self.outDir.text(), infoOutput)), \
+      '--get-platforms-from-overlap', os.path.normpath(self.inputF.text()), \
+      '--series-output', os.path.normpath('%s/%s' % (self.outDir.text(), seriesOutput)), \
+      '--info-output', os.path.normpath('%s/%s' % (self.outDir.text(), infoOutput)), \
+      '--skip-series-info'
+    ]
     #only pass search terms if not empty
     terms = self.searchTerms.toPlainText().encode('utf8').strip()
     if terms and terms != '':
@@ -653,7 +667,8 @@ class ExpressionForm(GuiForm):
       dataDir = os.path.normpath(guiVars['probeDataDir'])
       outDir = os.path.normpath('%s/matrices' % guiVars['probeDataDir'])
     if guiVars['probeOrganism']:
-      organism = guiVars['probeOrganism']
+      # setCurrentOption matches on sub strings so just take first two words
+      organism = ' '.join(guiVars['probeOrganism'].split(' ')[:2])
     self.inputF.setText(inputF)
     self.organism.setCurrentOption(organism)
     self.outDir.setText(outDir)
