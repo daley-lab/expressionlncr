@@ -82,7 +82,7 @@ class App(qtw.QWidget):
       'overlapOutputA': c.FIND_OVERLAP_DEFAULTS['outputA'],
       'overlapOutputB': c.FIND_OVERLAP_DEFAULTS['outputB'],
       'overlapOutputXml': c.FIND_OVERLAP_DEFAULTS['output'],
-      'expressionOrganism': prettifyOrganism(c.FIND_GEO_DATASERIES_DEFAULTS['organism']),
+      'expressionOrganism': c.FIND_GEO_DATASERIES_DEFAULTS['organism'],
       'expressionInputF': c.FIND_OVERLAP_DEFAULTS['outputB'],
       'expressionOutDir': c.GET_GEO_DATASERIES_DEFAULTS['output'],
       'expressionSearchTerms': c.FIND_GEO_DATASERIES_DEFAULTS['searchTerms'],

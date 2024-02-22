@@ -221,3 +221,6 @@ ORG_TO_ARRAY_TO_GPL = {
     'X_tropicalis': 'GPL10263'
   }
 }
+
+# List of organism names like: Sus scrofa, Xenopus tropicalis, etc...
+ORG_NAMES = [o[0].upper() + o[1:].replace('_', ' ') for o in ORG_TO_ARRAY_TO_GPL.keys()]
