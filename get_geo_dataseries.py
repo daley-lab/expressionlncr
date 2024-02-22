@@ -73,13 +73,13 @@ def downloadSeriesMatrixFiles(seriesIds, outputDir, ftp, skippedSeriesFile, comp
       ssf.write('')
   #download all matrix files for series that haven't been downloaded already
   seriesToDownload = set(seriesIds).difference(completedSeries)
-  with open(completedSeriesFile, 'ab') as completeFile:
-    with open(skippedSeriesFile, 'ab') as skipFile:
+  with open(completedSeriesFile, 'a') as completeFile:
+    with open(skippedSeriesFile, 'a') as skipFile:
       count = 0
       numSeries = len(seriesToDownload)
       for series in sorted(seriesToDownload):
         count += 1
-        print('downloading data for series %s (%s/%s) @ %s ...' % (
+        print('Downloading data for series %s (%s/%s) @ %s ...' % (
             series, count, numSeries, str(datetime.datetime.now())
         ))
         seriesDir = geotools.getSeriesDirFromGSE(series)  #ex GSE10nnn
@@ -107,17 +107,17 @@ def downloadSeriesMatrixFiles(seriesIds, outputDir, ftp, skippedSeriesFile, comp
                 print('Error: Could not download series matrix file %s for GSE%s' % (url, series))
                 downloadError = ue
             else:
-              print('skipped (already exists) %s > %s' % (url, output))
+              print('Skipped (already exists) %s > %s' % (url, output))
           if downloadError:
             raise downloadError
-          completeFile.write('%s\n' % series)
+          completeFile.write(f'{series}\n')
         except urllib.error.URLError as ue:
           #we couldn't get folder info at all for the series
           print(ue, file=sys.stderr)
           print('Error: Could not download series matrix file(s) for GSE%s, skipping...' % series)
           if series not in skippedSeries:
             skippedSeries.add(series)
-            skipFile.write('%s\n' % series)
+            skipFile.write(f'{series}\n')
       print('Finished downloads @ %s' % str(datetime.datetime.now()))
 
 def usage(defaults):
