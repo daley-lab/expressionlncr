@@ -18,7 +18,7 @@ import xml.etree.cElementTree as cet
 import downloader
 
 
-def getEsearch(database, searchTerms, output, retstart=None, retmax=None):
+def getEsearch(database, searchTerms, output, retstart=None, retmax=None, overwrite=False):
   baseurl = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi'
   if retstart and retmax:
     params = urllib.parse.urlencode({
@@ -42,9 +42,9 @@ def getEsearch(database, searchTerms, output, retstart=None, retmax=None):
     })
   url = baseurl + '?%s' % params
   print('Querying NCBI eSearch: ' + url)
-  downloader.simpleDownload(url, output)
+  downloader.simpleDownload(url, output, force=overwrite)
 
-def getEsummary(database, queryKey, webEnv, output, retstart=None, retmax=None):
+def getEsummary(database, queryKey, webEnv, output, retstart=None, retmax=None, overwrite=False):
   baseurl = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi'
   if retstart and retmax:
     params = urllib.parse.urlencode({
@@ -70,7 +70,7 @@ def getEsummary(database, queryKey, webEnv, output, retstart=None, retmax=None):
     })
   url = baseurl + '?%s' % params
   print('Querying NCBI eSummary: ' + url)
-  downloader.simpleDownload(url, output)
+  downloader.simpleDownload(url, output, force=overwrite)
 
 #returns a 2-tuple of (<QueryKey> value, <WebEnv> value)
 def parseEsearch(esearchFile):
@@ -127,15 +127,15 @@ def parseEsummary(esummaryFile, accessionType, filterType=None, filterValue=None
 #enter a database and search terms, and output
 # found accessions to a given file
 def getAccessionsFromSearch(database, accessionType, terms,
-    esearchOutput, esummaryOutput, filterType=None, filterValue=None):
+    esearchOutput, esummaryOutput, filterType=None, filterValue=None, overwrite=True):
   accessions = set()
   #saves esearch to file
-  getEsearch(database, terms, esearchOutput)
+  getEsearch(database, terms, esearchOutput, overwrite=overwrite)
   #parses params linking to eSummary from esearch file
   try:
     (queryKey, webEnv) = parseEsearch(esearchOutput)
     #saves esummary results xml file
-    getEsummary(database, queryKey, webEnv, esummaryOutput)
+    getEsummary(database, queryKey, webEnv, esummaryOutput, overwrite=overwrite)
     #parses esummary for accession ids and returns them
     accessions = parseEsummary(esummaryOutput, accessionType, filterType, filterValue)
   except Exception:
