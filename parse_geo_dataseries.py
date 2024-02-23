@@ -206,18 +206,21 @@ def getLncrnaExpressionMap(overlapMap, expressionMap, organism):
       lncrnaExpressionMap[lncrna] = []
       #for each probe
       for probeChromFeat in lncrnaProbeList[1:]:
-        #grab the ensembl probe array name from the probe name.
-        #note: probe name like HG-U133_Plus_2/200012_x_at:1135:649;
-        slashSplit = probeChromFeat.name.split('/', 1)
+        # Grab the ensembl probe array name from the probe name.
+        # Full probe name string examples:
+        # - HG-U133_Plus_2/200012_x_at:1135:649; -> 200012_x_at is probe name
+        # - HG-U133A/AFFX-HUMRGE/M10098_3_at:309:481; -> AFFX-HUMRGE is probe set, M10098_3_at is probe name
+        # - HuEx-1_0-st-v2/3407537:1529897 -> 3407537 is probe name
+        slashSplit = probeChromFeat.name.split('/', 2)
         array = slashSplit[0]
-        #while we're at it grab the probe set name and probe name, too
-        colonSplit = slashSplit[1].split(':')
-        if len(colonSplit) > 2:
-          probeSet = colonSplit[0].strip()
-          probeName = colonSplit[1].strip()
+        if len(slashSplit) > 2:
+          # We have a probe set name
+          probeSet = slashSplit[1].strip()
+          endString = slashSplit[2].strip()
         else:
-          probeSet = 'NoSet'
-          probeName = colonSplit[0].strip()
+          probeSet = 'NOSET'
+          endString = slashSplit[1].strip()
+        probeName = endString.split(':', 1)[0]
         gpls = plat.getGplsFromEnsemblArrayName(organism, array)
         #we can now check for probe expression in the expression map using the GPL(s)
         # and the probe name.
@@ -265,7 +268,7 @@ def writeExpressedLncrnas(lncrnaExpressionMap, expressedLncrnasFile):
           probeColString = ''
           for probeExpression in probeExpressions:
             p = probeExpression
-            probeSetName = p.probe.probeSetName if (p.probe.probeSetName.upper() != 'NoSet'.upper()) else ''
+            probeSetName = p.probe.probeSetName if (p.probe.probeSetName.upper() != 'NOSET') else ''
             #note that we add onto the previous probe columns
             probeColString += '\t' + '\t'.join((
                 p.probe.arrayName,
@@ -365,7 +368,7 @@ def mergeExpressedLncrnaFiles(dataDir, outputFile):
 
 def parseSeriesDataMatrix(matrixFile):
   #map of GPL -> probe set -> probe name -> list(tuple(GSE, probe max value)).
-  #note: probe set == 'NoSet' where probe has no defined probe set name.
+  #note: probe set == 'NOSET' where probe has no defined probe set name.
   expressionMap = {}
   readTableHeader = False
   readTableRow = False
@@ -391,7 +394,7 @@ def parseSeriesDataMatrix(matrixFile):
         probeSet = slashSplit[0].upper().strip()
         probeName = slashSplit[1].upper().strip()
       else:
-        probeSet = 'NoSet'.upper().strip()
+        probeSet = 'NOSET'
         probeName = slashSplit[0].upper().strip()
       #get maximum expression at this probe among all samples in this series
       maxVal = -1
