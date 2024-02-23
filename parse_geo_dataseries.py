@@ -270,23 +270,23 @@ def writeExpressedLncrnas(lncrnaExpressionMap, expressedLncrnasFile):
             p = probeExpression
             probeSetName = p.probe.probeSetName if (p.probe.probeSetName.upper() != 'NOSET') else ''
             #note that we add onto the previous probe columns
-            probeColString += '\t' + '\t'.join((
-                p.probe.arrayName,
-                probeSetName,
-                p.probe.name,
-                p.gpl,
-                p.gse,
-                p.maxVal
-            ))
+            probeColString += '\t' + '\t'.join([
+              str(p.probe.arrayName),
+              str(probeSetName),
+              str(p.probe.name),
+              str(p.gpl),
+              str(p.gse),
+              str(p.maxVal)
+            ])
           #construct output line of lncrna and overlapping probe data
-          lncrnaCols = '\t'.join((
-              lncrnaBean.name,
-              lncrnaBean.chrom,
-              lncrnaBean.start,
-              lncrnaBean.stop, 
-              lncrnaBean.strand
-          ))
-          line = lncrnaCols + probeColString + '\n'  #note: probeColString starts with a tab
+          lncrnaCols = '\t'.join([
+              str(lncrnaBean.name),
+              str(lncrnaBean.chrom),
+              str(lncrnaBean.start),
+              str(lncrnaBean.stop), 
+              str(lncrnaBean.strand)
+          ])
+          line = f'{lncrnaCols}{probeColString}\n'  #note: probeColString starts with a tab
           elf.write(line)
         else:
           #by changing the pipeline to parse one matrix file at a time and writing 
