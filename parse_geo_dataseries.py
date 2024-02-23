@@ -56,7 +56,6 @@ import gzip
 import operator
 import os
 import sys
-import xml.etree.cElementTree as cet
 
 #local
 import beans
@@ -73,7 +72,7 @@ def parseFileNames(completedFilesFile):
       fileNames.add(line.strip())
   return fileNames
 
-def parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFilesFile, reverseOverlapFile=False, redo=False):
+def parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFilesFile, reverseOverlapFile=False, force=False):
   print('Parsing data started @ %s...' % str(datetime.datetime.now()))
   #read in overlap file and make map of lncrna -> probe
   print('Reading in lncrna/probe overlap file %s ...' % overlapFile)
@@ -103,7 +102,7 @@ def parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFiles
                     )]
   #check which series have already been parsed
   completedFiles = set()
-  if not redo:
+  if not force:
     try:
       completedFiles = parseFileNames(completedFilesFile)
     except IOError:
@@ -180,7 +179,7 @@ def parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFiles
     lncrnaList = parseLncrnasFromBed(lncrnaFile)
     nonOverlappingLncrnas = getNonOverlappingLncnras(lncrnaList, overlapMap)
     nonOverlappingLncrnasFile = '%s/nonoverlapping.lncrnas.txt' % outDir
-    print('> Non-overlapping lncRNAs file: %s ... @ %s' % ( \
+    print('> Non-Overlapping lncRNAs file: %s ... @ %s' % ( \
         noExpressionDataLncrnasFile, str(datetime.datetime.now())))
     with open(nonOverlappingLncrnasFile, 'w') as nolf:
       header = '#lncRNAs from lncRNA source not overlapping Ensembl probe(s)\n'
@@ -190,7 +189,7 @@ def parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFiles
         nolf.write(line)
   except Exception as err:
     print(err, file=sys.stderr)
-    print('Error writing non-overlapping lncRNAs', file=sys.stderr)
+    print('Error writing Non-Overlapping lncRNAs', file=sys.stderr)
   print('Finished parsing data @ %s' % str(datetime.datetime.now()))
 
 #given a map of lncrna/probe overlap, and lncrna expression, returns
@@ -295,7 +294,7 @@ def writeExpressedLncrnas(lncrnaExpressionMap, expressedLncrnasFile):
           #possible cases (#3 is most likely, use option -s in find_geo_dataseries.py to workaround, 
           # caveats being: much more data to download, series might be less likely to have series matrix 
           # summary results file)
-          #1. user uses an overlap.xml that contains more than the subset of downloaded information
+          #1. user uses an overlap.bed that contains more than the subset of downloaded information
           #2. an Ensembl funcgen database expression array has no GPL mapped in org_array_gpl.py
           #3. there are no GEO DataSets corresponding to the expression array in GEO, only GEO Series
           #4. there is a mismatch between Ensembl funcgen database probe names and the GEO Series matrix summary file
@@ -397,14 +396,17 @@ def parseSeriesDataMatrix(matrixFile):
       #get maximum expression at this probe among all samples in this series
       maxVal = -1
       for val in cols[1:]:
+        hasThrown = False
         try:
           stripped = val.strip()
           currentVal = float(stripped)
           if currentVal > maxVal:
             maxVal = currentVal
         except Exception:
-          print(f'Warning: probe expression value is NaN in {matrixFile}/{gpl}/{probeSet}/{probeName}: {val}', file=sys.stderr)
-          pass
+          if not hasThrown:
+            # Print out a single warning per probe across all samples
+            print(f'Warning: probe expression value is NaN in {matrixFile.name}:{gpl}:{probeSet}:{probeName}: "{val}"', file=sys.stderr)
+            hasThrown = True
       #set the expression map for this probe.
       #initialise keys as necessary.
       try:
@@ -438,36 +440,37 @@ def parseSeriesDataMatrix(matrixFile):
       continue
   return expressionMap
 
-#make a map of ChromFeature type a/b to ChromFeature type b/a.
-# map is a/b.name -> (a/b, b/a, b/a, ...) list of ChromFeature.
-# note XML maps a -> children b. reverse makes overlapMap of b -> a.
+
 def parseOverlapFile(overlapFile, reverse=False):
+  '''
+  Generates a map of key feature name to array of [ key feature, mapped feature 1, mapped feature 2, ...]
+
+  i.e. lncRNA name -> [ lncRNA chromosome feature, probe 1 chromosome feature, probe 2 chromosome feature, ...]
+  '''
   print('Parsing overlap file %s @ %s ...' % (overlapFile, str(datetime.datetime.now())))
-  xml = open(overlapFile, 'r')
-  tree = cet.parse(xml)
-  root = tree.getroot()
   overlapMap = {}
-  for a in root.findall('a'):
-    afeat = getChromFeature(a)
-    for b in a.findall('b'):
-      bfeat = getChromFeature(b)
-      #define which feature is the key in the map and which is mapped
+  with open(overlapFile, 'r') as f:
+    for line in f:
+      cols = line.strip().split('\t')
+      aCols = cols[:6]
+      bCols = cols[6:]
+      aFeat = getChromFeature(aCols)
+      bFeat = getChromFeature(bCols)
       if reverse:
-        keyfeat = bfeat
-        mappedfeat = afeat
+        keyfeat = bFeat
+        mappedfeat = aFeat
       else:
-        keyfeat = afeat
-        mappedfeat = bfeat
+        keyfeat = aFeat
+        mappedfeat = bFeat
       if not keyfeat or not mappedfeat:
-        #probably indicates a malformed overlap XML file.
-        # warn but continue parsing
+        # Probably indicates a malformed overlap file. Warn but continue parsing.
         print('Warning: likely malformed overlap file %s' % overlapFile)
-        print('\t> Missing child <B> elements for <A> elements')
+        print('\t> Missing mapped <B> elements for <A> elements')
         continue
       try:
         feats = overlapMap[keyfeat.name]
       except KeyError:
-        #no entry yet for key so initialise
+        # No entry yet for key so initialise
         overlapMap[keyfeat.name] = [keyfeat]
         feats = overlapMap[keyfeat.name]
       if not feats:
@@ -476,15 +479,26 @@ def parseOverlapFile(overlapFile, reverse=False):
       overlapMap[keyfeat.name] = feats
   return overlapMap
 
-#returns ChromFeature for a cElementTree element
-def getChromFeature(element):
-  chrom = element.find('chr').text
-  start = element.find('start').text
-  stop = element.find('stop').text
-  strand = element.find('strand').text
-  name = element.find('name').text
+
+def getChromFeature(bed6Cols: list[str]) -> beans.ChromFeature:
+  '''
+  Given BED-6 format columns return chromosome feature
+  '''
+  CHROM_POS = 0
+  START_POS = 1
+  STOP_POS = 2
+  NAME_POS = 3
+  #SCORE_POS = 4
+  STRAND_POS = 5
+  chrom = bed6Cols[CHROM_POS]
+  start = bed6Cols[START_POS]
+  stop = bed6Cols[STOP_POS]
+  name = bed6Cols[NAME_POS]
+  #score = bed6Cols[SCORE_POS]
+  strand = bed6Cols[STRAND_POS]
   feat = beans.ChromFeature(chrom, start, stop, strand, name)
   return feat
+
 
 def parseLncrnasFromBed(lncrnaFile):
   lncrnaList = None
@@ -523,14 +537,14 @@ def getNonOverlappingLncnras(lncrnaList, overlapMap):
 def usage(defaults):
   print('Usage: ' + sys.argv[0] + \
       ' -d, --data-dir <DIRECTORY> -o, --out-dir <DIRECTORY> -f, --overlap-file <FILE>')
-  print('Example: ' + sys.argv[0] + ' -d data/matrices -o data/results -f data/overlap.xml')
+  print('Example: ' + sys.argv[0] + ' -d data/matrices -o data/results -f data/overlap.bed')
   print('Defaults:')
   for key, val in sorted(iter(defaults.items()), key=operator.itemgetter(0)):
     print(str(key) + ' - ' + str(val))
 
 def __main__():
-  shortOpts = 'hvf:d:o:l:r:c:R'
-  longOpts = ['help', 'overlap-file=', 'reverse-overlap', 'data-dir=', 'out-dir=', 'lncrna-file=', 'organism=', 'completed-files-file=', 'redo']
+  shortOpts = 'hvf:d:o:l:r:c:F'
+  longOpts = ['help', 'overlap-file=', 'reverse-overlap', 'data-dir=', 'out-dir=', 'lncrna-file=', 'organism=', 'completed-files-file=', 'force']
   defaults = c.PARSE_GEO_DATASERIES_DEFAULTS
   overlapFile = defaults['overlapFile']
   reverseOverlapFile = defaults['reverseOverlapFile']
@@ -539,7 +553,7 @@ def __main__():
   lncrnaFile = defaults['lncrnaFile']
   organism = defaults['organism']
   completedFilesFile = defaults['completedFilesFile']
-  redo = defaults['redoCompleted']
+  force = defaults['force']
   try:
     opts, args = getopt.getopt(sys.argv[1:], shortOpts, longOpts)
   except getopt.GetoptError as err:
@@ -564,9 +578,9 @@ def __main__():
       organism = arg
     elif opt in ('-c', '--completed-files-file'):
       completedFilesFile = arg
-    elif opt in ('-R', '--redo'): # Force redoing completed file parsing
-      redo = True
-  parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFilesFile, reverseOverlapFile, redo)
+    elif opt in ('-F', '--force'): # Force redoing completed file parsing
+      force = True
+  parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFilesFile, reverseOverlapFile, force)
 
 if __name__ == '__main__':
   __main__()

@@ -29,7 +29,7 @@ FIND_OVERLAP_DEFAULTS = {
   'inputB': 'data/lncrnas.bed',
   'outputA': 'data/probes.overlap.bed',
   'outputB': 'data/lncrnas.overlap.bed',
-  'output': 'data/overlap.xml',
+  'output': 'data/overlap.bed',
   'chunksize': 10000,
   'chromosome': None,
   'swap': False,
@@ -78,14 +78,14 @@ GET_GEO_DATASERIES_DEFAULTS = {
 }
 
 PARSE_GEO_DATASERIES_DEFAULTS = {
-  'overlapFile': 'data/overlap.xml',
+  'overlapFile': 'data/overlap.bed',
   'reverseOverlapFile': False,
   'dataDir': 'data/matrices',
   'outDir': 'data/results',
   'lncrnaFile': 'data/lncrnas.bed',
   'organism': 'homo_sapiens',
   'completedFilesFile': 'data/results/expressed_series/completed_files.txt',
-  'redoCompleted': False
+  'force': False
 }
 
 GET_LNCRNA_DEFAULTS = {
