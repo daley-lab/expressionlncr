@@ -30,11 +30,7 @@ FIND_OVERLAP_DEFAULTS = {
   'outputA': 'data/probes.overlap.bed',
   'outputB': 'data/lncrnas.overlap.bed',
   'output': 'data/overlap.bed',
-  'chunksize': 10000,
-  'chromosome': None,
-  'swap': False,
-  'inputSorted': False,
-  'pandasPipeline': False
+  'keep': False,
 }
 
 BED_DEFAULTS = {

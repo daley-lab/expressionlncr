@@ -13,6 +13,7 @@ import datetime
 import getopt
 import operator
 import os
+import pathlib
 import re
 import sys
 import subprocess as sub
@@ -148,14 +149,15 @@ def getOverlap(inputA: str, inputB: str, output: str):
 
 
 def __main__():
-  shortOpts = 'ha:b:A:B:o:'
-  longOpts = ['help', 'input-a=', 'input-b=', 'output-a=', 'output-b=', 'output=' ]
+  shortOpts = 'ha:b:A:B:o:k'
+  longOpts = ['help', 'input-a=', 'input-b=', 'output-a=', 'output-b=', 'output=', 'keep']
   defaults = c.FIND_OVERLAP_DEFAULTS
   inputA = defaults['inputA']
   inputB = defaults['inputB']
   outputA = defaults['outputA']
   outputB = defaults['outputB']
   output = defaults['output']
+  keep = defaults['keep']
   try:
     opts, args = getopt.getopt(sys.argv[1:], shortOpts, longOpts)
   except getopt.GetoptError as err:
@@ -176,6 +178,8 @@ def __main__():
       outputB = arg
     elif opt in ('-o', '--output'):
       output = arg
+    elif opt in ('-k', '--keep'):
+      keep = True
   if len(args) > 0 and output == defaults['output']:
     # Only assume first argument is output if user didn't specify an --output arg
     output = args[0]
@@ -189,6 +193,20 @@ def __main__():
   getOverlapping(sortedA, sortedB, outputA)
   getOverlapping(sortedB, sortedA, outputB)
   getOverlap(sortedA, sortedB, output)
+  if not keep:
+    print('Cleaning up intermediary files ...')
+    toDelete = [
+      stdchrA,
+      stdchrB,
+      normalA,
+      normalB,
+      sortedA,
+      sortedB,
+    ]
+    for path in toDelete:
+      print(f'Deleting {path} ...')
+      f = pathlib.Path(safePath(path))
+      f.unlink(missing_ok=True)
   print('Done ' + sys.argv[0] + ' @ time: ' + str(datetime.datetime.now()))
 
 
