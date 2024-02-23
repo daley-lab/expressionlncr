@@ -72,6 +72,7 @@ def parseFileNames(completedFilesFile):
       fileNames.add(line.strip())
   return fileNames
 
+
 def parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFilesFile, reverseOverlapFile=False, force=False):
   print('Parsing data started @ %s...' % str(datetime.datetime.now()))
   #read in overlap file and make map of lncrna -> probe
@@ -123,7 +124,7 @@ def parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFiles
       count += 1
       print(' > Parsing file (%s/%s): %s @ %s' % (count, numFiles, fileName, str(datetime.datetime.now())))
       try:
-        #create map of GPL -> probeSet -> probeName -> list(tuple(max probe val among samples, GSE))
+        #create map of GPL -> probeSet -> map (GSE, max probe val among samples)
         with gzip.open(fileName, 'rt') as matrixFile:
           expressionMap = parseSeriesDataMatrix(matrixFile)
         #write lncrna expression to file
@@ -192,8 +193,9 @@ def parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFiles
     print('Error writing Non-Overlapping lncRNAs', file=sys.stderr)
   print('Finished parsing data @ %s' % str(datetime.datetime.now()))
 
-#given a map of lncrna/probe overlap, and lncrna expression, returns
-# a map of lncrna -> probe expression.
+
+# Given a map of lncrna/probe overlap, and lncrna expression, returns
+#  a map of lncrna -> probe (set) expression.
 def getLncrnaExpressionMap(overlapMap, expressionMap, organism):
   #map the expression map probe name to the overlap file's expression probe name (-> lncrna).
   # then construct map of lncrna -> expression.
@@ -206,29 +208,28 @@ def getLncrnaExpressionMap(overlapMap, expressionMap, organism):
       lncrnaExpressionMap[lncrna] = []
       #for each probe
       for probeChromFeat in lncrnaProbeList[1:]:
-        # Grab the ensembl probe array name from the probe name.
+        # Grab the ensembl probe array name from the probe set name.
         # Full probe name string examples:
-        # - HG-U133_Plus_2/200012_x_at:1135:649; -> 200012_x_at is probe name
-        # - HG-U133A/AFFX-HUMRGE/M10098_3_at:309:481; -> AFFX-HUMRGE is probe set, M10098_3_at is probe name
-        # - HuEx-1_0-st-v2/3407537:1529897 -> 3407537 is probe name
-        slashSplit = probeChromFeat.name.split('/', 2)
+        # - HG-U133_Plus_2/200012_x_at:1135:649; -> 200012_x_at is probe set
+        # - HG-U133A/AFFX-HUMRGE/M10098_3_at:309:481; -> AFFX-HUMRGE/M10098_3_at is probe set, 309:481; is specific probe
+        # - HuEx-1_0-st-v2/3407537:1529897 -> 3407537 is probe set
+        # - HumanWG_6_V2/ILMN_1698961 -> ILMN_1698961 is probe set
+        slashSplit = probeChromFeat.name.split('/', 1)
         array = slashSplit[0]
-        if len(slashSplit) > 2:
-          # We have a probe set name
-          probeSet = slashSplit[1].strip()
-          endString = slashSplit[2].strip()
+        probeSetPlusProbe = slashSplit[1]
+        colsSplit = probeSetPlusProbe.split(':', 1)
+        probeSet = colsSplit[0]
+        if len(colsSplit) > 1:
+          probeName = colsSplit[1]
         else:
-          probeSet = 'NOSET'
-          endString = slashSplit[1].strip()
-        probeName = endString.split(':', 1)[0]
+          probeName = ''
         gpls = plat.getGplsFromEnsemblArrayName(organism, array)
-        #we can now check for probe expression in the expression map using the GPL(s)
-        # and the probe name.
-        #the value for the probe key is a list of tuple(gse, max val among samples in gse)
+        # We can now check for probe set's expression in the expression map using the GPL(s) and the probe name.
+        # The value for the probe set key is a map of (gse, max val among samples in gse).
         for gpl in gpls:
           try:
-            probeSeriesMaxVals = expressionMap[gpl.upper()][probeSet.upper()][probeName.upper()]
-            for (gse, maxVal) in probeSeriesMaxVals:
+            probeSeriesMaxVals = expressionMap[gpl.upper()][probeSet.upper()] or {}
+            for (gse, maxVal) in probeSeriesMaxVals.items():
               probe = beans.Probe(
                 probeId=None,
                 probeSetName=probeSet,
@@ -268,7 +269,7 @@ def writeExpressedLncrnas(lncrnaExpressionMap, expressedLncrnasFile):
           probeColString = ''
           for probeExpression in probeExpressions:
             p = probeExpression
-            probeSetName = p.probe.probeSetName if (p.probe.probeSetName.upper() != 'NOSET') else ''
+            probeSetName = p.probe.probeSetName or ''
             #note that we add onto the previous probe columns
             probeColString += '\t' + '\t'.join([
               str(p.probe.arrayName),
@@ -367,8 +368,8 @@ def mergeExpressedLncrnaFiles(dataDir, outputFile):
   return list(lncrnaExpressionMap.keys())
 
 def parseSeriesDataMatrix(matrixFile):
-  #map of GPL -> probe set -> probe name -> list(tuple(GSE, probe max value)).
-  #note: probe set == 'NOSET' where probe has no defined probe set name.
+  # Map of GPL -> probe set (upper case) -> map(GSE, probe max value).
+  # Series matrix table contains probe set to sample values.
   expressionMap = {}
   readTableHeader = False
   readTableRow = False
@@ -387,15 +388,9 @@ def parseSeriesDataMatrix(matrixFile):
       readTableRow = False
       continue
     if readTableRow:
-      #read in a row of the table. (probeSet/)probeName\tsample1Val\tsample2Val ...
+      #read in a row of the table. probeSet\tsample1Val\tsample2Val ...
       cols = line.replace('"', '').split('\t')
-      slashSplit = cols[0].split('/', 1)
-      if len(slashSplit) > 1:
-        probeSet = slashSplit[0].upper().strip()
-        probeName = slashSplit[1].upper().strip()
-      else:
-        probeSet = 'NOSET'
-        probeName = slashSplit[0].upper().strip()
+      probeSet = cols[0].upper().strip()
       #get maximum expression at this probe among all samples in this series
       maxVal = -1
       for val in cols[1:]:
@@ -408,7 +403,7 @@ def parseSeriesDataMatrix(matrixFile):
         except Exception:
           if not hasThrown:
             # Print out a single warning per probe across all samples
-            print(f'Warning: probe expression value is NaN in {matrixFile.name}:{gpl}:{probeSet}:{probeName}: "{val}"', file=sys.stderr)
+            print(f'Warning: probe set expression value is NaN in {matrixFile.name}:{gpl}:{probeSet}: "{val}"', file=sys.stderr)
             hasThrown = True
       #set the expression map for this probe.
       #initialise keys as necessary.
@@ -420,15 +415,10 @@ def parseSeriesDataMatrix(matrixFile):
         expressionMap[gpl][probeSet]
       except KeyError:
         expressionMap[gpl][probeSet] = {}
-      try:
-        #add to probe's list of tuple(gse, maxval)
-        probeSeriesMaxVals = expressionMap[gpl][probeSet][probeName]
-        if not probeSeriesMaxVals:
-          probeSeriesMaxVals = []
-        probeSeriesMaxVals.append((gse, maxVal))
-        expressionMap[gpl][probeSet][probeName] = probeSeriesMaxVals
-      except KeyError:
-        expressionMap[gpl][probeSet][probeName] = [(gse, maxVal)]
+      #add to probe's map of gse to maxval
+      probeSeriesMaxVals = expressionMap[gpl][probeSet]
+      probeSeriesMaxVals[gse] = maxVal
+      expressionMap[gpl][probeSet] = probeSeriesMaxVals
     if readTableHeader:
       #ignore the header line for now. queue up read table row on next row.
       readTableRow = True
@@ -518,6 +508,7 @@ def parseLncrnasFromBed(lncrnaFile):
     print('Error parsing file %s for lncRNAs. Output file of lncRNAs not found to overlap with probes will be missing!' % lncrnaFile, file=sys.stderr)
   return lncrnaList
 
+
 def getNonOverlappingLncnras(lncrnaList, overlapMap):
   nonOverlappingLncrnas = []
   #since python doesn't support complex classes as keys in dictionaries (hashmaps)
@@ -536,6 +527,7 @@ def getNonOverlappingLncnras(lncrnaList, overlapMap):
   if (numOverlapping + numNonOverlapping) != numLncrnas:
     print('Warning: number of lncRNAs in getNonOverlappingLncrnas did not add up!')
   return nonOverlappingLncrnas
+
 
 def usage(defaults):
   print('Usage: ' + sys.argv[0] + \
@@ -584,6 +576,7 @@ def __main__():
     elif opt in ('-F', '--force'): # Force redoing completed file parsing
       force = True
   parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFilesFile, reverseOverlapFile, force)
+
 
 if __name__ == '__main__':
   __main__()
