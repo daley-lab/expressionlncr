@@ -692,10 +692,8 @@ class ResultsForm(GuiForm):
     self.dataDir = FileChooser(dialogType=c.DIRECTORY_OPEN_DIALOG_TYPE)
     self.outDir = FileChooser(dialogType=c.DIRECTORY_OPEN_DIALOG_TYPE)
     self.overlapFile = FileChooser(dialogType=c.OPEN_DIALOG_TYPE, fileTypes=c.XML_FILE_TYPE)
-    self.reverse = qtw.QCheckBox()
     formLayout.addRow(c.RESULTS_DATADIR_MSG, self.dataDir)
     formLayout.addRow(c.RESULTS_OVERLAP_FILE_MSG, self.overlapFile)
-    formLayout.addRow(c.RESULTS_REVERSE_OVERLAP_MSG, self.reverse)
     formLayout.addRow(c.RESULTS_OUTPUT_DIR_MSG, self.outDir)
     #run button
     runLayout = qtw.QHBoxLayout()
@@ -722,9 +720,6 @@ class ResultsForm(GuiForm):
       '--overlap-file', os.path.normpath(self.overlapFile.text()), \
       '--lncrna-file', os.path.normpath(self.lncrnaFile), \
       '--organism', self.organism]
-    reversed = self.reverse.isChecked()
-    if reversed:
-      jobArgs.append('--reverse-overlap')
     return jobArgs
 
   def getJobType(self):

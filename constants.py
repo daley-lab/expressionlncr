@@ -223,7 +223,6 @@ RESULTS_SUBTITLE = '<p>This form iterates through the downloaded GEO Series, ' +
 RESULTS_DATADIR_MSG = 'Series matrices directory'
 RESULTS_OVERLAP_FILE_MSG = 'lncRNA -> probe overlap'
 RESULTS_OUTPUT_DIR_MSG = 'Output directory'
-RESULTS_REVERSE_OVERLAP_MSG = 'Reversed overlap file?\n(probe -> lncRNA)'
 
 BED_FILE_TYPE = 'BED files (*.bed)'
 TXT_FILE_TYPE = 'Text files (*.txt)'
