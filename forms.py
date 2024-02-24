@@ -435,12 +435,12 @@ class OverlapForm(GuiForm):
     self.inputB = FileChooser(dialogType=c.OPEN_DIALOG_TYPE, fileTypes=c.BED_FILE_TYPE)
     self.outputA = FileChooser(dialogType=c.SAVE_DIALOG_TYPE, fileTypes=c.BED_FILE_TYPE)
     self.outputB = FileChooser(dialogType=c.SAVE_DIALOG_TYPE, fileTypes=c.BED_FILE_TYPE)
-    self.outputXml = FileChooser(dialogType=c.SAVE_DIALOG_TYPE, fileTypes=c.XML_FILE_TYPE)
+    self.output = FileChooser(dialogType=c.SAVE_DIALOG_TYPE, fileTypes=c.BED_FILE_TYPE)
     formLayout.addRow(c.OVERLAP_INPUT_A_MSG, self.inputA)
     formLayout.addRow(c.OVERLAP_INPUT_B_MSG, self.inputB)
     formLayout.addRow(c.OVERLAP_OUTPUT_A_MSG, self.outputA)
     formLayout.addRow(c.OVERLAP_OUTPUT_B_MSG, self.outputB)
-    formLayout.addRow(c.OVERLAP_OUTPUT_XML_MSG, self.outputXml)
+    formLayout.addRow(c.OVERLAP_OUTPUT_MSG, self.output)
     #run button
     runLayout = qtw.QHBoxLayout()
     runLayout.addStretch()
@@ -458,7 +458,7 @@ class OverlapForm(GuiForm):
         '-b', os.path.normpath(self.inputB.text()), \
         '-A', os.path.normpath(self.outputA.text()), \
         '-B', os.path.normpath(self.outputB.text()), \
-        os.path.normpath(self.outputXml.text())]
+        os.path.normpath(self.output.text())]
     return jobArgs
 
   def getJobType(self):
@@ -470,7 +470,7 @@ class OverlapForm(GuiForm):
         'overlapInputB': self.inputB.text(),
         'overlapOutputA': self.outputA.text(),
         'overlapOutputB': self.outputB.text(),
-        'overlapOutputXml': self.outputXml.text()
+        'overlapOutput': self.output.text()
     }
 
   def autofill(self, guiVars):
@@ -485,18 +485,18 @@ class OverlapForm(GuiForm):
     outputA = os.path.normpath(guiVars['overlapOutputA'])
     inputB = os.path.normpath(guiVars['overlapInputB'])
     outputB = os.path.normpath(guiVars['overlapOutputB'])
-    if guiVars['probeOutput']:
-      inputA = os.path.normpath(guiVars['probeOutput'])
-      outputA = os.path.normpath('%s/%s.overlap.bed' % (dataDir, inputA.split('/')[-1].split('.bed')[0]))
     if guiVars['lncrnaOutput']:
-      inputB = os.path.normpath(guiVars['lncrnaOutput'])
+      inputA = os.path.normpath(guiVars['lncrnaOutput'])
+      outputA = os.path.normpath('%s/%s.overlap.bed' % (dataDir, inputA.split('/')[-1].split('.bed')[0]))
+    if guiVars['probeOutput']:
+      inputB = os.path.normpath(guiVars['probeOutput'])
       outputB = os.path.normpath('%s/%s.overlap.bed' % (dataDir, inputB.split('/')[-1].split('.bed')[0]))
-    outputXml = os.path.normpath('%s/%s' % (dataDir, guiVars['overlapOutputXml'].split('/')[-1]))
+    output = os.path.normpath('%s/%s' % (dataDir, guiVars['overlapOutput'].split('/')[-1]))
     self.inputA.setText(inputA)
     self.inputB.setText(inputB)
     self.outputA.setText(outputA)
     self.outputB.setText(outputB)
-    self.outputXml.setText(outputXml)
+    self.output.setText(output)
 
 
 class ExpressionForm(GuiForm):
@@ -689,7 +689,7 @@ class ResultsForm(GuiForm):
     formLayout = qtw.QFormLayout()
     self.dataDir = FileChooser(dialogType=c.DIRECTORY_OPEN_DIALOG_TYPE)
     self.outDir = FileChooser(dialogType=c.DIRECTORY_OPEN_DIALOG_TYPE)
-    self.overlapFile = FileChooser(dialogType=c.OPEN_DIALOG_TYPE, fileTypes=c.XML_FILE_TYPE)
+    self.overlapFile = FileChooser(dialogType=c.OPEN_DIALOG_TYPE, fileTypes=c.BED_FILE_TYPE)
     formLayout.addRow(c.RESULTS_DATADIR_MSG, self.dataDir)
     formLayout.addRow(c.RESULTS_OVERLAP_FILE_MSG, self.overlapFile)
     formLayout.addRow(c.RESULTS_OUTPUT_DIR_MSG, self.outDir)
@@ -741,8 +741,8 @@ class ResultsForm(GuiForm):
       dataDir = os.path.normpath(guiVars['expressionOutDir'])
     if guiVars['expressionDataDir']:
       outDir = os.path.normpath('%s/results' % guiVars['expressionDataDir'])
-    if guiVars['overlapOutputXml']:
-      overlapFile = os.path.normpath(guiVars['overlapOutputXml'])
+    if guiVars['overlapOutput']:
+      overlapFile = os.path.normpath(guiVars['overlapOutput'])
     self.dataDir.setText(dataDir)
     self.outDir.setText(outDir)
     self.overlapFile.setText(overlapFile)

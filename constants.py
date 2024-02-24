@@ -25,10 +25,10 @@ FIND_GEO_DATASERIES_DEFAULTS = {
 }
 
 FIND_OVERLAP_DEFAULTS = {
-  'inputA': 'data/probes.bed',
-  'inputB': 'data/lncrnas.bed',
-  'outputA': 'data/probes.overlap.bed',
-  'outputB': 'data/lncrnas.overlap.bed',
+  'inputA': 'data/lncrnas.bed',
+  'inputB': 'data/probes.bed',
+  'outputA': 'data/lncrnas.overlap.bed',
+  'outputB': 'data/probes.overlap.bed',
   'output': 'data/overlap.bed',
   'keep': False,
 }
@@ -188,13 +188,13 @@ PROBE_REFRESH_BUTTON_MSG = 'Refresh'
 OVERLAP_TAB_LABEL = '&overlap'
 OVERLAP_TITLE = '<h3>Get lncRNA/probe overlap</h3>'
 OVERLAP_SUBTITLE = '<p>This form computes the overlap between the previous ' + \
-    ' lncRNAs and Ensembl expression probes, and exports the results to an XML file ' + \
+    ' lncRNAs and Ensembl expression probes, and exports the results to a BED-like file ' + \
     ' for further steps.</p>'
 OVERLAP_INPUT_A_MSG = 'Input A'
 OVERLAP_INPUT_B_MSG = 'Input B'
 OVERLAP_OUTPUT_A_MSG = 'Output A'
 OVERLAP_OUTPUT_B_MSG = 'Output B'
-OVERLAP_OUTPUT_XML_MSG = 'Combined Output\n(A -> B)'
+OVERLAP_OUTPUT_MSG = 'Combined Output\n(A -> B)'
 OVERLAP_RUN_BUTTON_MSG = LNCRNA_RUN_BUTTON_MSG
 
 EXPRESSION_TAB_LABEL = '&expression download'
@@ -228,7 +228,6 @@ BED_FILE_TYPE = 'BED files (*.bed)'
 TXT_FILE_TYPE = 'Text files (*.txt)'
 TSV_FILE_TYPE = 'Tab-delimited files (*.tsv)'
 CSV_FILE_TYPE = 'Comma-delimited files (*.csv)'
-XML_FILE_TYPE = 'XML files (*.xml)'
 COLUMN_FILE_TYPE = '%s;;%s;;%s' % (TXT_FILE_TYPE, TSV_FILE_TYPE, CSV_FILE_TYPE)
 
 OPEN_DIALOG_TYPE = 'open'
