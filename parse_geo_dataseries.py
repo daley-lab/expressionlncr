@@ -173,8 +173,7 @@ def parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFiles
   except Exception as err:
     print(err, file=sys.stderr)
     print('Error writing no expression data lncRNAs', file=sys.stderr)
-  #use original lncrna file with all lncrnas to make output file of lncrnas #
-  # w/ no overlap.
+  # Use original lncrna file with all lncrnas to make output file of lncrnas with no overlap.
   try:
     print('> Parsing all lncRNAs from original input %s ...' % lncrnaFile)
     lncrnaList = parseLncrnasFromBed(lncrnaFile)
@@ -246,7 +245,7 @@ def getLncrnaExpressionMap(overlapMap, expressionMap, organism):
               )
               lncrnaExpressionMap[lncrna].append(probeExpression)
           except KeyError:
-            #print 'Found no probe data for: gpl %s, probeSet %s, probeName %s' % (gpl, probeSet, probeName)
+            #print('Found no probe data for: gpl %s, probeSet %s, probeName %s' % (gpl, probeSet, probeName))
             continue
   return lncrnaExpressionMap
 
@@ -297,19 +296,19 @@ def writeExpressedLncrnas(lncrnaExpressionMap, expressedLncrnasFile):
           elf.write(line)
         else:
           # By changing the pipeline to parse one matrix file at a time and writing 
-          #  out the expressed lncrnas, the error message below will be trigger by some lncrnas
+          #  out the expressed lncrnas, the error message below will be trigger by some lncRNAs
           #  for every matrix file and is no longer useful.
           pass
-          # No expression data? this is unexpected so warn, but continue.
+          # No expression data? This is unexpected so warn, but continue.
           # Possible cases (#3 is most likely, use option -s in find_geo_dataseries.py to workaround, 
           #  caveats being: much more data to download, series might be less likely to have series matrix 
           #  summary results file).
-          # 1. user uses an overlap.bed that contains more than the subset of downloaded information
-          # 2. an Ensembl funcgen database expression array has no GPL mapped in org_array_gpl.py
-          # 3. there are no GEO DataSets corresponding to the expression array in GEO, only GEO Series
-          # 4. there is a mismatch between Ensembl funcgen database probe names and the GEO Series matrix summary file
-          #print >> sys.stderr, 'Warning: Expected expression data for lncRNA ' + \
-          #    '%s but none found. Check the "no expression data" lncRNAs file for a full list.' % lncrnaBean.name
+          # 1. User uses an overlap.bed that contains more than the subset of downloaded information
+          # 2. An Ensembl funcgen database expression array has no GPL mapped in org_array_gpl.py
+          # 3. There are no GEO DataSets corresponding to the expression array in GEO, only GEO Series
+          # 4. There is a mismatch between Ensembl funcgen database probe names and the GEO Series matrix summary file
+          #print('Warning: Expected expression data for lncRNA ' + \
+          #    '%s but none found. Check the "no expression data" lncRNAs file for a full list.' % lncrnaBean.name, file=sys.stderr)
   except Exception as err:
     print(err, file=sys.stderr)
     print('Error writing expressed lncRNAs file %s' % expressedLncrnasFile, file=sys.stderr)
@@ -516,10 +515,8 @@ def parseLncrnasFromBed(lncrnaFile):
 
 def getNonOverlappingLncnras(lncrnaList, overlapMap):
   nonOverlappingLncrnas = []
-  #since python doesn't support complex classes as keys in dictionaries (hashmaps)
-  # the overlapMap is a bit messy.
-  # keys are lncrna.name -> (lncrna, probe1, probe2, ...).
-  # note: the probes and lncrnas are ChromFeature type.
+  # Overlap map is lncrna.name -> (lncrna, probe1, probe2, ...).
+  # Note: the probes and lncrnas are ChromFeature type.
   for lncrna in lncrnaList:
     if lncrna not in overlapMap:
       nonOverlappingLncrnas.append(lncrna)
@@ -579,7 +576,7 @@ def __main__():
       organism = arg
     elif opt in ('-c', '--completed-files-file'):
       completedFilesFile = arg
-    elif opt in ('-F', '--force'): # Force redoing completed file parsing
+    elif opt in ('-F', '--force'): # Force re-parsing completed files
       force = True
   parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFilesFile, reverseOverlapFile, force)
 
