@@ -1,0 +1,17 @@
+{
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.tabSize": 2,
+    "editor.rulers": [
+      100
+    ]
+  },
+  "python.defaultInterpreterPath": ".venv/bin/python3",
+  "python.analysis.autoImportCompletions": true,
+  "python.analysis.extraPaths": [
+    ".venv/lib/python3.11/site-packages",
+  ],
+  "python.analysis.fixAll": [
+    "source.unusedImports"
+  ],
+}

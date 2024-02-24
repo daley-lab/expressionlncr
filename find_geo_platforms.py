@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 #
 # find NCBI GEO platforms, specifically platform accession numbers (GPLXXX)
 # from Ensembl Funcgen database array_chip.txt and array.txt flat files which contain
@@ -16,6 +16,7 @@
 #local
 import get_ensembl_probes
 import org_array_gpl
+import ncbitools
 
 
 def getEnsemblArraysFromFile(dataDir):
@@ -43,18 +44,18 @@ def searchForPlatforms(organism, title, esearchFile, esummaryFile):
   filterType = 'title'
   filterValue = '[HG-U133A]'  #TODO dynamic. here as an example only.
   terms = '%s[organism]+AND+%s[entry type]+AND+%s[title]' % (organism, entryType, title)
-  seriesIds = ncbitools.getAccessionsFromSearch(database, accessionType, \
+  ids = ncbitools.getAccessionsFromSearch(database, accessionType, \
       terms, esearchFile, esummaryFile, filterType, filterValue)
-  return platformIds
+  return ids
 
 #organism - the ensembl funcgen organism name like homo_sapiens_funcgen_84_38
 #dataDir - the directory with the downloaded Ensembl funcgen files, particularly array.txt.gz
 # and array_chip.txt.gz
-def getGplsFromEnsemblOrganismData(organism, dataDir):
+def getGplsFromEnsemblOrganismData(organismKey, dataDir):
   arrayChipMap = getEnsemblArraysFromFile(dataDir)
-  gpls = []
-  for (id_, array) in arrayChipMap.iteritems():
-    arrayGpls = getGplsFromEnsemblArrayName(organism, array)
+  gpls = set([])
+  for (id_, array) in arrayChipMap.items():
+    arrayGpls = getGplsFromEnsemblArrayName(organismKey, array)
     #where multiple GPLs correspond to an array returned as 'GPL123,GPL234'.
     # can be split for our purposes here.
     if arrayGpls:
@@ -65,26 +66,26 @@ def getGplsFromEnsemblOrganismData(organism, dataDir):
 #get gpl from manual curation stored in class.
 #note gpls returned in format 'GPL123' or 'GPL123,GPL456'.
 #returns [] if failed.
-#expects organism to be like 'homo_sapiens_funcgen_85_38' or 'homo_sapiens_funcgen'
-def getGplsFromEnsemblArrayName(organism, array):
+#expects organism to be like 'homo_sapiens_funcgen_85_38' or 'homo_sapiens_funcgen' or 'homo_sapiens'
+def getGplsFromEnsemblArrayName(organismKey, array):
   #cut off version number from the for ex. "homo_sapiens_funcgen_85_38" string
   # bc the keys are version independent (homo_sapiens_funcgen) in the map.
-  keyword = 'funcgen'
-  keywordIndex = organism.find(keyword)
+  keyword = '_funcgen'
+  keywordIndex = organismKey.find(keyword)
   if keywordIndex >= 0:
-    organismKey = organism[:keywordIndex+len(keyword)]
+    org = organismKey[:keywordIndex]
   else:
-    organismKey = organism
+    org = organismKey
   #could fail on a key not found exception if an organism 
   # or array is expected to be curated but the curations aren't updated.
   try:
-    gplString = org_array_gpl.ORG_TO_ARRAY_TO_GPL[organismKey][array]
+    gplString = org_array_gpl.ORG_TO_ARRAY_TO_GPL[org][array]
     if not gplString or gplString == '':
       raise
-    gpls = gplString.split(',')
-  except:
+    gpls = set(gplString.split(','))
+  except Exception:
     #print 'Warning: no GPLs found for organism %s, array %s' % (organismKey, array)
     #exit gracefully and don't print any warning. many arrays currently 
     # don't have any GPL in the manually curated map.
-    gpls = []
+    gpls = set([])
   return gpls

@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 #
 # script to grab NCBI GEO data series matrix files from FTP server 
 # given the GEO data series IDs.
@@ -12,15 +12,14 @@
 # ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE10nnn/GSE10000/matrix/GSE10000-GPL8321_series_matrix.txt.gz
 
 
-import csv
 import datetime
 import getopt
 import operator
 import os
-import re
-from sets import Set
 import sys
-import urllib2
+import urllib.request
+import urllib.error
+import urllib.parse
 
 #local
 import downloader
@@ -49,40 +48,40 @@ def downloadSeriesMatrixFiles(seriesIds, outputDir, ftp, skippedSeriesFile, comp
   #create path to output directory if it doesn't exist.
   # add trailing slash to make sure recognised as directory.
   downloader.createPathToFile('%s/' % outputDir)
-  print 'Downloading series matrix files to: %s ...' % outputDir
-  print 'Started downloads @ %s' % str(datetime.datetime.now())
+  print('Downloading series matrix files to: %s ...' % outputDir)
+  print('Started downloads @ %s' % str(datetime.datetime.now()))
   #check which series passed have already been downloaded
-  completedSeries = Set()
+  completedSeries = set()
   try:
     completedSeries = geotools.parseSeriesIdFile(completedSeriesFile)
-  except IOError as ioe:
+  except IOError:
     #no existing file, create
-    print 'No completed series file %s, creating ...' % completedSeriesFile
-    with open(completedSeriesFile, 'wb') as csf:
+    print('No completed series file %s, creating ...' % completedSeriesFile)
+    with open(completedSeriesFile, 'w') as csf:
       csf.write('')
   if len(completedSeries) > 0:
-    print 'Skipping downloads for following series (already complete): %s ...' % (','.join(completedSeries))
+    print('Skipping downloads for following series (already complete): %s ...' % (','.join(completedSeries)))
   #check which series have already been skipped. read into a set so we don't write
   # multiple of the same series to the skipped file if the download is resumed.
-  skippedSeries = Set()
+  skippedSeries = set()
   try:
     skippedSeries = geotools.parseSeriesIdFile(skippedSeriesFile)
-  except IOError as ioe:
+  except IOError:
     #no existing file, create
-    print 'No skipped series file %s, creating ...' % skippedSeriesFile
-    with open(skippedSeriesFile, 'wb') as ssf:
+    print('No skipped series file %s, creating ...' % skippedSeriesFile)
+    with open(skippedSeriesFile, 'w') as ssf:
       ssf.write('')
   #download all matrix files for series that haven't been downloaded already
-  seriesToDownload = Set(seriesIds).difference(completedSeries)
-  with open(completedSeriesFile, 'ab') as completeFile:
-    with open(skippedSeriesFile, 'ab') as skipFile:
+  seriesToDownload = set(seriesIds).difference(completedSeries)
+  with open(completedSeriesFile, 'a') as completeFile:
+    with open(skippedSeriesFile, 'a') as skipFile:
       count = 0
       numSeries = len(seriesToDownload)
       for series in sorted(seriesToDownload):
         count += 1
-        print 'downloading data for series %s (%s/%s) @ %s ...' % (
+        print('Downloading data for series %s (%s/%s) @ %s ...' % (
             series, count, numSeries, str(datetime.datetime.now())
-        )
+        ))
         seriesDir = geotools.getSeriesDirFromGSE(series)  #ex GSE10nnn
         ftpFolder = '%s/%s/GSE%s/matrix/' % (ftp, seriesDir, series)
         matrixFiles = []
@@ -92,7 +91,7 @@ def downloadSeriesMatrixFiles(seriesIds, outputDir, ftp, skippedSeriesFile, comp
           #NOTE pass folder with slash at end to this method.
           folderInfo = downloader.getFolderInfo(ftpFolder)
           #restrict to only series matrix files
-          for f in folderInfo.keys():
+          for f in list(folderInfo.keys()):
             if f.endswith('series_matrix.txt.gz'):
               matrixFiles.append(f)
           for matrixFile in matrixFiles:
@@ -102,32 +101,32 @@ def downloadSeriesMatrixFiles(seriesIds, outputDir, ftp, skippedSeriesFile, comp
             if not os.path.isfile(output):
               try:
                 downloader.simpleDownload(url, output)
-                print '%s > %s' % (url, output)
-              except urllib2.URLError as ue:
+                print('%s > %s' % (url, output))
+              except urllib.error.URLError as ue:
                 #matrix file not present for the series
-                print 'Error: Could not download series matrix file %s for GSE%s' % (url, series)
+                print('Error: Could not download series matrix file %s for GSE%s' % (url, series))
                 downloadError = ue
             else:
-              print 'skipped (already exists) %s > %s' % (url, output)
+              print('Skipped (already exists) %s > %s' % (url, output))
           if downloadError:
             raise downloadError
-          completeFile.write('%s\n' % series)
-        except urllib2.URLError as ue:
+          completeFile.write(f'{series}\n')
+        except urllib.error.URLError as ue:
           #we couldn't get folder info at all for the series
-          print >> sys.stderr, ue
-          print 'Error: Could not download series matrix file(s) for GSE%s, skipping...' % series
+          print(ue, file=sys.stderr)
+          print('Error: Could not download series matrix file(s) for GSE%s, skipping...' % series)
           if series not in skippedSeries:
             skippedSeries.add(series)
-            skipFile.write('%s\n' % series)
-      print 'Finished downloads @ %s' % str(datetime.datetime.now())
+            skipFile.write(f'{series}\n')
+      print('Finished downloads @ %s' % str(datetime.datetime.now()))
 
 def usage(defaults):
-  print 'Usage: ' + sys.argv[0] + \
-      ' (-i, --input <INPUT> | -s, --series X,Y,Z) -o, --output <OUTPUT> -k, --skipped-series <SKIPPED>'
-  print 'Example: ' + sys.argv[0] + ' -i data/matrices/series.txt -s GSE10000,GSE20000 -o data/matrices'
-  print 'Defaults:'
-  for key, val in sorted(defaults.iteritems(), key=operator.itemgetter(0)):
-    print str(key) + ' - ' + str(val)
+  print('Usage: ' + sys.argv[0] + \
+      ' (-i, --input <INPUT> | -s, --series X,Y,Z) -o, --output <OUTPUT> -k, --skipped-series <SKIPPED>')
+  print('Example: ' + sys.argv[0] + ' -i data/matrices/series.txt -s GSE10000,GSE20000 -o data/matrices')
+  print('Defaults:')
+  for key, val in sorted(iter(defaults.items()), key=operator.itemgetter(0)):
+    print(str(key) + ' - ' + str(val))
 
 def __main__():
   shortOpts = 'hf:i:o:s:k:c:'
@@ -142,7 +141,7 @@ def __main__():
   try:
     opts, args = getopt.getopt(sys.argv[1:], shortOpts, longOpts)
   except getopt.GetoptError as err:
-    print str(err)
+    print(str(err))
     usage(defaults)
     sys.exit(2)
   for opt, arg in opts:
@@ -163,7 +162,7 @@ def __main__():
       completedSeriesFile = arg
   seriesIds = geotools.getSeriesIds(inputFile, series)
   if not seriesIds:
-    print >> sys.stderr, 'No GEO series IDs passed to download. Nothing to do, quitting...'
+    print('No GEO series IDs passed to download. Nothing to do, quitting...', file=sys.stderr)
     sys.exit(2)
   downloadSeriesMatrixFiles(seriesIds, output, ftp, skippedSeriesFile, completedSeriesFile)
 

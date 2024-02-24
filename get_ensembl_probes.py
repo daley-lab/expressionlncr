@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # Grabs bulk download of Ensembl Funcgen database flat files for an organism 
 # and searches for probe features (matched probe locations against reference genome).
 # This method limits us to the platforms in Ensembl but eliminates the 
@@ -13,13 +13,10 @@
 import csv
 import datetime
 import getopt
-import itertools
-import numpy as np
 import operator
 import os
 import re
 import sys
-import shutil
 
 #local
 import arraytools
@@ -34,12 +31,22 @@ import get_ensembl_funcgen_organisms as org
 #@return a map of file type to location
 def getFuncgenFiles(orgString, destDir, fileTypes, cleanUp):
   downloader.createPathToFile(destDir)
-  baseUrl = 'ftp://ftp.ensembl.org/pub/current_mysql'
+  # Note: to use current Ensembl release would need to rework for changes to database schema
+  # https://useast.ensembl.org/info/docs/api/core/core_schema.html
+  # https://useast.ensembl.org/info/docs/api/funcgen/funcgen_schema.html
+  #baseUrl = 'ftp://ftp.ensembl.org/pub/current/mysql'
+  baseUrl = f'ftp://ftp.ensembl.org/pub/release-{c.PROBE_ENSEMBL_VERSION}/mysql'
   fileNameToLocation = {}
+  funcgenUrlString = orgString
+  #coreUrlString = orgString.replace('funcgen', 'core')
   for f in fileTypes:
-    print 'get funcgen files - downloading %s ...' % f
-    url = baseUrl + '/' + orgString + '/' + f + '.txt.gz'
-    output = destDir + '/' + f + '.txt'
+    print('get funcgen files - downloading %s ...' % f)
+    #schemaString = coreUrlString if f in ['coord_system', 'seq_region'] else funcgenUrlString
+    schemaString = funcgenUrlString
+    url = baseUrl + '/' + schemaString + '/' + f + '.txt.gz'
+    if not destDir.endswith('/'):
+      destDir += '/'
+    output = destDir + f + '.txt'
     zippedOutput = output + '.gz'
     downloader.simpleDownload(url, zippedOutput)
     ziptools.gunzip(zippedOutput, output)
@@ -67,17 +74,18 @@ def getCoordSystemId(coordSystemFile, schemaBuild, forceCurrentSchema):
   isCurrentCol = 8
   delim = '\t'
   #note that version can be null therefore need to split on only single tab
-  with open(coordSystemFile, 'rb') as csf:
+  with open(coordSystemFile, 'r') as csf:
     reader = csv.reader(csf, delimiter=delim)
     for cols in reader:
       coordSystemId = cols[coordSystemIdCol]
       name = cols[nameCol]
       currentSchemaBuild = cols[schemaBuildCol]
-      isCurrent = cols[isCurrentCol]
       if name == 'chromosome' and currentSchemaBuild == schemaBuild:
-        if not isCurrent and forceCurrentSchema:
-          print >> sys.stderr, 'Schema build passed to get_ensembl_probes.py is not current. Aborting...'
-          sys.exit(2)
+        if forceCurrentSchema:
+          isCurrent = cols[isCurrentCol]
+          if not isCurrent:
+            print('Schema build passed to get_ensembl_probes.py is not current. Aborting...', file=sys.stderr)
+            sys.exit(2)
         break
   return coordSystemId
 
@@ -95,25 +103,25 @@ def getExpressionArrays(arrayFile, arrayChipFile):
   #array_chip.txt file:
   arrayChipFileFormat = {'arrayChipIdCol': 0, 'arrayIdCol': 2}
   #build map of array_id to array_chip_id
-  with open(arrayChipFile, 'rb') as acf:
+  with open(arrayChipFile, 'r') as acf:
     arrayChipReader = csv.reader(acf, delimiter=delim)
     for arrayChipCols in arrayChipReader:
       arrayChipId = arrayChipCols[arrayChipFileFormat['arrayChipIdCol']]
       arrayId = arrayChipCols[arrayChipFileFormat['arrayIdCol']]
       arrayIdToChipId[arrayId] = arrayChipId
   #get the array chip id for each array that is format "EXPRESSION"
-  with open(arrayFile, 'rb') as af:
+  with open(arrayFile, 'r') as af:
     arrayReader = csv.reader(af, delimiter=delim)
     for arrayCols in arrayReader:
       if arrayCols[arrayFileFormat['formatCol']] == 'EXPRESSION':
         arrayId = arrayCols[arrayFileFormat['arrayIdCol']]
-        if arrayId in arrayIdToChipId.keys():
+        if arrayId in list(arrayIdToChipId.keys()):
           arrayChipId = arrayIdToChipId[arrayId]
           arrayName = arrayCols[arrayFileFormat['arrayName']]
           expressionArrayChipIds[arrayChipId] = arrayName
         else:
-          print >> sys.stderr, 'get_ensembl_probes.getExpressionArrays(): array_chip_id missing for array: ' \
-              + arrayId
+          print('get_ensembl_probes.getExpressionArrays(): array_chip_id missing for array: ' \
+              + arrayId, file=sys.stderr)
   return expressionArrayChipIds
 
 #need to use probe file in order to get the name of probes, 
@@ -122,7 +130,7 @@ def getExpressionArrays(arrayFile, arrayChipFile):
 #@return a map of expression probes
 def getExpressionProbes(probeFile, probeSetFile, expressionArrayChipIds,
       chunksize=100, keysOnly=False):
-  print 'Start get probes @ %s' % datetime.datetime.now()
+  print('Start get probes @ %s' % datetime.datetime.now())
   delim = '\t'
   nullChar = '\\N'  #i.e. '\N' is null in the probe file
   expressionProbes = {}
@@ -133,29 +141,29 @@ def getExpressionProbes(probeFile, probeSetFile, expressionArrayChipIds,
   probeSets = {}  #id to name
   probeSetProbeSetIdCol = 0
   probeSetProbeSetNameCol = 1
-  print 'get probes - probeset file @ %s' % datetime.datetime.now()
-  with open(probeSetFile, 'rb') as psf:
+  print('get probes - probeset file @ %s' % datetime.datetime.now())
+  with open(probeSetFile, 'r') as psf:
     probeSetReader = csv.reader(psf, delimiter=delim)
     for chunk in arraytools.getChunks(probeSetReader, chunksize=chunksize):
-      for l in chunk:
-        probeSets[l[probeSetProbeSetIdCol]] = l[probeSetProbeSetNameCol]
-  print 'get probes - probe file @ %s' % datetime.datetime.now()
-  with open(probeFile, 'rb') as pf:
+      for psr in chunk:
+        probeSets[psr[probeSetProbeSetIdCol]] = psr[probeSetProbeSetNameCol]
+  print('get probes - probe file @ %s' % datetime.datetime.now())
+  with open(probeFile, 'r') as pf:
     probeReader = csv.reader(pf, delimiter=delim)
     for chunk in arraytools.getChunks(probeReader, chunksize=chunksize):
-      for l in chunk:
+      for pr in chunk:
         #only store the probe if it corresponds to a probe expression array (and not a methylation array for ex.)
-        arrayChipId = l[arrayChipIdCol]
+        arrayChipId = pr[arrayChipIdCol]
         if arrayChipId in expressionArrayChipIds:
-          probeId = l[probeIdCol]
+          probeId = pr[probeIdCol]
           probe = None
           if not keysOnly:
-            probeSetId = l[probeSetIdCol]
+            probeSetId = pr[probeSetIdCol]
             if probeSetId != nullChar and probeSetId != '' and probeSetId in probeSets:
               probeSetName = probeSets[probeSetId]
             else:
               probeSetName = None
-            probeName = l[nameCol]
+            probeName = pr[nameCol]
             arrayName = expressionArrayChipIds[arrayChipId]
             probe = beans.Probe(probeId, probeSetName, probeName, arrayChipId, arrayName)
           expressionProbes[probeId] = probe
@@ -167,12 +175,13 @@ def getExpressionProbes(probeFile, probeSetFile, expressionArrayChipIds,
 # probeSetId, probeSetName, probeId, probeName, arrayChipId
 def getExpressionProbeDataFrame(probeFile, probeSetFile, expressionArrayChipIds,
       keysOnly=False):
-  print 'Start get probes @ %s' % datetime.datetime.now()
+  import pandas as pd
+  print('Start get probes @ %s' % datetime.datetime.now())
   #pidgeon-hole the expressionArrayChipIds dictionary of chip id -> chip name
   # into a dataframe object. could go back and re-write function creating the dict.
   expressionArrayChipIdFrame = pd.DataFrame(data={
-      'arrayChipId': expressionArrayChipIds.keys(),
-      'arrayChipName': expressionArrayChipIds.values()
+      'arrayChipId': list(expressionArrayChipIds.keys()),
+      'arrayChipName': list(expressionArrayChipIds.values())
   })
   #some constants regarding the files
   delim = '\t'
@@ -186,7 +195,7 @@ def getExpressionProbeDataFrame(probeFile, probeSetFile, expressionArrayChipIds,
   probeDataTypes = {'probeId': str, 'probeSetId': str, 
       'probeName': str, 'arrayChipId': str}
   #read in the probe set file
-  print 'get probes - probeset file @ %s' % datetime.datetime.now()
+  print('get probes - probeset file @ %s' % datetime.datetime.now())
   probeSetFrame = pd.read_csv(
       probeSetFile,
       usecols=probeSetCols,
@@ -198,7 +207,7 @@ def getExpressionProbeDataFrame(probeFile, probeSetFile, expressionArrayChipIds,
       names=probeSetColNames
   )
   #read in the probe file
-  print 'get probes - probe file @ %s' % datetime.datetime.now()
+  print('get probes - probe file @ %s' % datetime.datetime.now())
   probeFrame = pd.read_csv(
       probeFile,
       usecols=probeCols,
@@ -210,7 +219,7 @@ def getExpressionProbeDataFrame(probeFile, probeSetFile, expressionArrayChipIds,
       engine='c',
       names=probeColNames
   )
-  print 'get probes - merging @ %s' % datetime.datetime.now()
+  print('get probes - merging @ %s' % datetime.datetime.now())
   #merge the probeset file probesetname into the probe file info.
   # probesetid can be null therefore left join.
   mergedOnProbeSetIdFrame = pd.merge(probeFrame, probeSetFrame, on='probeSetId', how='left')
@@ -227,11 +236,11 @@ def getExpressionProbeDataFrame(probeFile, probeSetFile, expressionArrayChipIds,
 def getSchemaBuildFromOrganism(organism):
   #get schema build from organism parameter (retrieved in earlier script and put as option 
   # [prettified] into galaxy interface)
-  m = re.search('[a-z_]+_funcgen_([0-9]+_[0-9]+)', organism)
+  m = re.search(org.FUNCGEN_ORG_REGEX_PATTERN, organism)
   if m:
-    schemaBuild = m.group(1)
+    schemaBuild = m.group(2) + '_' + m.group(3)
   else: 
-    print >> sys.stderr, 'Invalid value for parameter organism: ' + organism
+    print('Invalid value for parameter organism: ' + organism, file=sys.stderr)
     sys.exit(2)
   return schemaBuild
 
@@ -244,7 +253,7 @@ def getSequenceRegionIds(seqRegionFile, coordSystemId, schemaBuild):
   coordSystemIdCol = 2
   schemaBuildCol = 4
   delim = '\t'
-  with open(seqRegionFile, 'rb') as f:
+  with open(seqRegionFile, 'r') as f:
     reader = csv.reader(f, delimiter=delim)
     for cols in reader:
       seqRegionId = cols[seqRegionIdCol]
@@ -268,39 +277,39 @@ def getSequenceRegionIds(seqRegionFile, coordSystemId, schemaBuild):
 def createBedFile(probeFeatureFile, seqRegionIdMap, expressionProbes, 
     outputFile, organism, chunksize):
   delim = '\t'
-  probeFeatureIdCol = 0
+  #probeFeatureIdCol = 0
   seqRegionIdCol = 1
   seqRegionStartCol = 2
   seqRegionEndCol = 3
   seqRegionStrandCol = 4
   probeIdCol = 5
-  analysisIdCol = 6
-  mismatchesCol = 7
-  cigarLineCol = 8
-  PROBE_SET_NAME = 0
-  PROBE_NAME = 1
-  ARRAY_CHIP_ID = 2
-  ARRAY_NAME = 3
-  print 'create bed - # seq region keys: ' + str(len(seqRegionIdMap.keys()))
-  print 'create bed - # expression probes: ' + str(len(expressionProbes))
+  #analysisIdCol = 6
+  #mismatchesCol = 7
+  #cigarLineCol = 8
+  #PROBE_SET_NAME = 0
+  #PROBE_NAME = 1
+  #ARRAY_CHIP_ID = 2
+  #ARRAY_NAME = 3
+  print('create bed - # seq region keys: ' + str(len(list(seqRegionIdMap.keys()))))
+  print('create bed - # expression probes: ' + str(len(expressionProbes)))
   #ensure directories to output file are created
-  print 'create bed - creating path to ' + outputFile + '...'
+  print('create bed - creating path to ' + outputFile + '...')
   downloader.createPathToFile(outputFile)
-  #delete file at output if already present. open(f, 'wb') should erase it for us but it's 
+  #delete file at output if already present. open(f, 'w') should erase it for us but it's 
   # appending for some strange reason.
-  print 'create bed - removing ' + outputFile + ' if present...'
+  print('create bed - removing ' + outputFile + ' if present...')
   downloader.remove(outputFile)
   #output: chrom, chromStart, chromEnd, name, score (0), strand.
-  print 'create bed - using probe feature file %s' % probeFeatureFile
-  print 'create bed - start writing output...'
-  with open(outputFile, 'wb') as output:
-    header = 'track name=probeFeatures ' + \
-        'description="Ensembl microarray probe features from database ' + \
-        organism + '" useScore=0\n'
-    with open(probeFeatureFile, 'rb') as pff:
+  print('create bed - using probe feature file %s' % probeFeatureFile)
+  print('create bed - start writing output...')
+  with open(outputFile, 'w') as output:
+    #header = 'track name=probeFeatures ' + \
+    #    'description="Ensembl microarray probe features from database ' + \
+    #    organism + '" useScore=0\n'
+    with open(probeFeatureFile, 'r') as pff:
       probeFeatureReader = csv.reader(pff, delimiter=delim)
         #TODO add header back in and later logic dealing with it
-  #    output.write(header)
+      #output.write(header)
       for chunk in arraytools.getChunks(probeFeatureReader, chunksize):
         for cols in chunk:
           try:
@@ -327,14 +336,15 @@ def createBedFile(probeFeatureFile, seqRegionIdMap, expressionProbes,
                 '+' if (cols[seqRegionStrandCol] == '1') else '-'
               )
             output.write(line)
-          except KeyError as ke:
+          except KeyError:
             #this wasn't a probe feature with a relevant probe
             continue
-  print 'create bed - done writing output @ time: ' + str(datetime.datetime.now())
+  print('create bed - done writing output @ time: ' + str(datetime.datetime.now()))
 
 #@input dataframe row with probe array, probe set, probe name
 #@return probe description formatted for a bed file
 def getProbeDesc(row):
+  import numpy as np
   #for probes with a probe set name, format their id column in the BED file as 
   # array/probe_set:probe else use array/probe
   if (row['probeSetName'] and row['probeSetName'] != 'NaN' and row['probeSetName'] != np.nan):
@@ -357,38 +367,39 @@ def getStrandSymbol(row):
 # data frame of all relevant expression probes.
 def createBedFileFromDataFrame(probeFeatureFile, seqRegionIdMap, expressionProbeFrame, 
     outputFile, organism):
+  import pandas as pd
   #some constants defining the files
   delim = '\t'
-  probeFeatureIdCol = 0
-  seqRegionIdCol = 1
-  seqRegionStartCol = 2
-  seqRegionEndCol = 3
-  seqRegionStrandCol = 4
-  probeIdCol = 5
-  analysisIdCol = 6
-  mismatchesCol = 7
-  cigarLineCol = 8
-  PROBE_SET_NAME = 0
-  PROBE_NAME = 1
-  ARRAY_CHIP_ID = 2
-  ARRAY_NAME = 3
+  #probeFeatureIdCol = 0
+  #seqRegionIdCol = 1
+  #seqRegionStartCol = 2
+  #seqRegionEndCol = 3
+  #seqRegionStrandCol = 4
+  #probeIdCol = 5
+  #analysisIdCol = 6
+  #mismatchesCol = 7
+  #cigarLineCol = 8
+  #PROBE_SET_NAME = 0
+  #PROBE_NAME = 1
+  #ARRAY_CHIP_ID = 2
+  #ARRAY_NAME = 3
   probeFeatureCols = [1, 2, 3, 4, 5]
   probeFeatureColNames = ['seqRegionId', 'seqRegionStart', 'seqRegionEnd',
       'seqRegionStrand', 'probeId']
   probeFeatureDataTypes = str
-  print 'create bed - # seq region keys: ' + str(len(seqRegionIdMap))
-  print 'create bed - # expression probes: ' + str(len(expressionProbeFrame))
+  print('create bed - # seq region keys: ' + str(len(seqRegionIdMap)))
+  print('create bed - # expression probes: ' + str(len(expressionProbeFrame)))
   #ensure directories to output file are created
-  print 'create bed - creating path to ' + outputFile + '...'
+  print('create bed - creating path to ' + outputFile + '...')
   downloader.createPathToFile(outputFile)
-  #delete file at output if already present. open(f, 'wb') should erase it for us but it's 
+  #delete file at output if already present. open(f, 'w') should erase it for us but it's 
   # appending for some strange reason.
-  print 'create bed - removing ' + outputFile + ' if present...'
+  print('create bed - removing ' + outputFile + ' if present...')
   downloader.remove(outputFile)
   #output: chrom, chromStart, chromEnd, name, score (0), strand.
-  print 'create bed - using probe feature file %s' % probeFeatureFile
+  print('create bed - using probe feature file %s' % probeFeatureFile)
   #read probe feature file into dataframe
-  print 'create bed - get probe feature file @ %s' % datetime.datetime.now()
+  print('create bed - get probe feature file @ %s' % datetime.datetime.now())
   probeFeatureFrame = pd.read_csv(
       probeFeatureFile,
       usecols=probeFeatureCols,
@@ -400,8 +411,8 @@ def createBedFileFromDataFrame(probeFeatureFile, seqRegionIdMap, expressionProbe
   #pidgeon-hole the sequence region id dictionary of sequence region id -> chromosome
   # into a dataframe object. could go back and re-write function creating the dict.
   seqRegionIdFrame = pd.DataFrame(data={
-      'seqRegionId': seqRegionIdMap.keys(),
-      'seqRegionName': seqRegionIdMap.values()
+      'seqRegionId': list(seqRegionIdMap.keys()),
+      'seqRegionName': list(seqRegionIdMap.values())
   })
   #merge in the sequence region names (i.e. chromosomes) needed for chromosome column
   withSeqRegionName = pd.merge(probeFeatureFrame, seqRegionIdFrame, on='seqRegionId', how='inner')
@@ -431,15 +442,15 @@ def createBedFileFromDataFrame(probeFeatureFile, seqRegionIdMap, expressionProbe
   bedFrame['zeroes'] = '0'  #or instead of .copy() above use here: bedFrame.loc[:,'zeroes'] = '0'
   #FIXME thread dies somewhere after this point??
   #get probe description column from arrayChipName, probeSetName, and probeName
-  print 'create bed - creating probe description column @ %s' % datetime.datetime.now()
+  print('create bed - creating probe description column @ %s' % datetime.datetime.now())
   bedFrame['probeDesc'] = withProbeInfo.apply(getProbeDesc, axis='columns')
   #get strand symbol from stand integer column
-  print 'create bed - creating strand symbol column @ %s' % datetime.datetime.now()
+  print('create bed - creating strand symbol column @ %s' % datetime.datetime.now())
   bedFrame['seqRegionStrandSymb'] = withProbeInfo.apply(getStrandSymbol, axis='columns')
   #free up memory
   withProbeInfo = None
   #write out our bed data frame to file
-  print 'create bed - start writing output @ %s' % datetime.datetime.now()
+  print('create bed - start writing output @ %s' % datetime.datetime.now())
   header = ['track name=probeFeatures ' + \
       'description="Ensembl microarray probe features from database ' + \
       organism + '" useScore=0\n']
@@ -456,18 +467,18 @@ def createBedFileFromDataFrame(probeFeatureFile, seqRegionIdMap, expressionProbe
       columns=columnsToWrite,
       header=header,
   )
-  print 'create bed - done writing output @ time: ' + str(datetime.datetime.now())
+  print('create bed - done writing output @ time: ' + str(datetime.datetime.now()))
 
 def usage(defaults):
-  print 'Usage: ' + sys.argv[0] + \
+  print('Usage: ' + sys.argv[0] + \
       ' -d, --data-dir <CREATED_DIR> -f, --force-current-schema ' + \
       '-c, --chunksize <FILE_LINES_READ_AT_ONCE> ' + \
-      '-o, --organism <ORGANISM> <BED_OUTPUT>'
-  print 'Example: ' + sys.argv[0] + \
-      ' --organism homo_sapiens_funcgen_85_38 data/ensembl_probe_features.bed'
-  print 'Defaults:'
-  for key, val in sorted(defaults.iteritems(), key=operator.itemgetter(0)):
-    print str(key) + ' - ' + str(val)
+      '-o, --organism <ORGANISM> <BED_OUTPUT>')
+  print('Example: ' + sys.argv[0] + \
+      ' --organism homo_sapiens_funcgen_85_38 data/ensembl_probe_features.bed')
+  print('Defaults:')
+  for key, val in sorted(iter(defaults.items()), key=operator.itemgetter(0)):
+    print(str(key) + ' - ' + str(val))
 
 def __main__():
   shortOpts = 'hc:d:o:fnp'
@@ -486,7 +497,7 @@ def __main__():
   try:
     opts, args = getopt.getopt(sys.argv[1:], shortOpts, longOpts)
   except getopt.GetoptError as err:
-    print str(err)
+    print(str(err))
     usage(defaults)
     sys.exit(2)
   for opt, arg in opts:
@@ -512,8 +523,9 @@ def __main__():
   if len(args) > 0:
     output = args[0]
   #add trailing slash to directory so recognised as such
-  dataDir = dataDir + '/'
-  print 'Start get_ensembl_probes @ time: ' + str(datetime.datetime.now())
+  if not dataDir.endswith('/'):
+    dataDir += '/'
+  print('Start get_ensembl_probes @ time: ' + str(datetime.datetime.now()))
   #get available funcgen organisms if we don't already have a file with the available 
   # organisms in it
   if not noDownload:
@@ -528,7 +540,7 @@ def __main__():
     if os.path.isfile(availableOrganismsFileName):
       #retrieve from file
       availableOrganisms = []
-      with open(availableOrganismsFileName, 'rb') as orgFile:
+      with open(availableOrganismsFileName, 'r') as orgFile:
         for line in orgFile:
           availableOrganisms.append(line.strip())
     else:
@@ -536,7 +548,7 @@ def __main__():
       availableOrganismsDict = org.parseFtpIndexForOrganisms(funcgenOrgDefaults['url'], availableOrganismsFileName, None, None, None)
       #turn dict like: homo_sapiens_funcgen_84_38 -> Homo sapiens v84.38
       # into array of keys
-      availableOrganisms = availableOrganismsDict.keys()
+      availableOrganisms = list(availableOrganismsDict.keys())
     #match the default or user-passed organism against the up-to-date one
     newOrganism = None
     for availOrg in availableOrganisms:
@@ -546,56 +558,50 @@ def __main__():
     if newOrganism:
       oldOrganism = organism
       organism = newOrganism
-      print 'Updated Ensembl organism %s to %s' % (oldOrganism, organism)
+      print('Updated Ensembl organism %s to %s' % (oldOrganism, organism))
     else:
-      print >> sys.stderr, 'No matching new Ensembl organism for %s, download from Ensembl may fail' % organism
+      print('No matching new Ensembl organism for %s, download from Ensembl may fail' % organism, file=sys.stderr)
   #get schema build from organism name string
-  print 'Getting schema build from organism %s ...' % organism
+  print('Getting schema build from organism %s ...' % organism)
   schemaBuild = getSchemaBuildFromOrganism(organism)
   #pipeline:
   #grab funcgen database flat files for ensembl organism.
   #store file name to location in a map.
   #keys are fixed: array, array_chip, coord_system, probe, probe_set, probe_feature, seq_region
   if not noDownload:
-    print 'Downloading Ensembl Funcgen files to %s ...' % dataDir
+    print('Downloading Ensembl Funcgen files to %s ...' % dataDir)
     funcgenFiles = getFuncgenFiles(organism, dataDir, fileTypes, cleanUp)
   else:
-    print 'Skipping download of Ensembl Funcgen files ...'
-  #NOTE the following funcgenFiles definition is for testing purposes 
-  # (since download and extract takes a while)
-  #funcgenFiles = {}
-  #for fileType in fileTypes:
-  #  funcgenFiles[fileType] = 'data/%s.txt' % fileType
+    print('Skipping download of Ensembl Funcgen files ...')
   #get current coordinate system id corresponding to chromosomes
-  print 'Start coord system time: ' + str(datetime.datetime.now())
+  print('Start coord system time: ' + str(datetime.datetime.now()))
   coordSystemId = getCoordSystemId(funcgenFiles['coord_system'], schemaBuild, forceCurrentSchema)
-  print 'Coordinate system id: %s' % coordSystemId
-  #get all seqeunce region ids for those chromosomes. note # ids = # chromosomes in the organism.
-  print 'Start sequence regions time: ' + str(datetime.datetime.now())
+  print('Coordinate system id: %s' % coordSystemId)
+  #get all sequence region ids for those chromosomes. note # ids = # chromosomes in the organism.
+  print('Start sequence regions time: ' + str(datetime.datetime.now()))
   seqRegionIdMap = getSequenceRegionIds(funcgenFiles['seq_region'], coordSystemId, schemaBuild)
-  print 'Number of sequence region ids: %s' % len(seqRegionIdMap)
+  print('Number of sequence region ids: %s' % len(seqRegionIdMap))
   #get array and probe data to be able to filter out the non-expression array probe features
-  print 'Start expression arrays time: ' + str(datetime.datetime.now())
+  print('Start expression arrays time: ' + str(datetime.datetime.now()))
   expressionArrayChipIds = getExpressionArrays(funcgenFiles['array'], funcgenFiles['array_chip'])
   #below takes a little while -> TODO optimise
-  print 'Start expression probes time: ' + str(datetime.datetime.now())
+  print('Start expression probes time: ' + str(datetime.datetime.now()))
   if not pandasPipeline:
     expressionProbes = getExpressionProbes(funcgenFiles['probe'], funcgenFiles['probe_set'],
         expressionArrayChipIds, chunksize=chunksize)
   else:
     expressionProbeFrame = getExpressionProbeDataFrame(funcgenFiles['probe'], funcgenFiles['probe_set'],
         expressionArrayChipIds)
-  print 'Start create bed time: ' + str(datetime.datetime.now())
+  print('Start create bed time: ' + str(datetime.datetime.now()))
   if not pandasPipeline:
     createBedFile(funcgenFiles['probe_feature'], seqRegionIdMap, expressionProbes,
         output, organism, chunksize)
   else:
-    import pandas as pd
     createBedFileFromDataFrame(funcgenFiles['probe_feature'], seqRegionIdMap, expressionProbeFrame,
         output, organism)
-  print 'Done get_ensembl_probes @ time: ' + str(datetime.datetime.now())
-  print 'If you wish to sort the BED file by chromosome and start pos, try running:\n'
-  print '\tsort -k1,1 -k2,2n %s > data/sorted.bed\n' % output
+  print('Done get_ensembl_probes @ time: ' + str(datetime.datetime.now()))
+  print('If you wish to sort the BED file by chromosome and start pos, try running:\n')
+  print('\tsort -k1,1 -k2,2n %s > data/probes.sorted.bed\n' % output)
 
 if __name__ == '__main__':
   __main__()

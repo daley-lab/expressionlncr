@@ -1,11 +1,11 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 #
 #functions related to working with NCBI GEO FTP server
 #
 
 
 import csv
-from sets import Set
+import re
 import sys
 
 
@@ -58,7 +58,7 @@ def removePrefix(idString, prefix):
 
 def printAccession(accessionType, accession):
   line = 'accn: %s, type: %s, result: %s' % (accession, accessionType, getDirFromGeoAccession(accessionType, accession))
-  print line
+  print(line)
 
 #get series ids from either input file and/or argument.
 #argument should look like: 1,2,3,4
@@ -78,20 +78,20 @@ def getSeriesIds(seriesFile=None, seriesArg=None):
         ids.append(col)
   if seriesFile:
     try:
-      with open(seriesFile, 'rb') as s:
+      with open(seriesFile, 'r') as s:
         #parse all ids in each line delimited by tabs, and all lines
         reader = csv.reader(s, delimiter='\t')
         for cols in reader:
           for col in cols:
             ids.append(removeGSE(col))
     except IOError:
-      print 'Warning: No series id file: %s' % seriesFile
+      print('Warning: No series id file: %s' % seriesFile)
   return ids
 
 #file format is whitespace delim rows &/ cols of GSE identifiers, numbers only
 def parseSeriesIdFile(seriesFileName):
-  seriesSet = Set()
-  with open(seriesFileName, 'rb') as seriesFile:
+  seriesSet = set()
+  with open(seriesFileName, 'r') as seriesFile:
     for line in seriesFile:
       cols = line.strip().split()
       for series in cols:

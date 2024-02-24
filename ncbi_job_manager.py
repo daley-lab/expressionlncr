@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # A job manager for submitting NCBI Entrez e-utils jobs to ensure no more than 
 # X job threads is submitted every T seconds.
 # Only 1 job manager instance should be created at a time.
@@ -24,7 +24,7 @@ class NCBIJobManager(object):
 	watchdogThreadRunning = False
 
 	def reset(self):
-		print 'NCBIJobManager reset'
+		print('NCBIJobManager reset')
 		self.isShutdown = False
 		#one thread can go. python semaphore is not fair (not FIFO)
 		self.jobSem = BoundedSemaphore(self.maxConnections)
@@ -49,7 +49,7 @@ class NCBIJobManager(object):
 				if not self.isShutdown:
 					self.jobSem.release()  #allow one more job to queue up
 		except Exception as err:
-			print('watchdog() Error: ' + str(err))
+			print(('watchdog() Error: ' + str(err)))
 			self.watchdogThreadRunning = False  #watchdog thread died, allow restart
 
 	#should take NCBIJobInterface job
@@ -65,7 +65,7 @@ class NCBIJobManager(object):
 			self.watchdogSem.release()
 			#don't release the job semaphore, that's for the watchdog to do
 		except Exception as err:
-			print('runJob() Error: ' + str(err))
+			print(('runJob() Error: ' + str(err)))
 
 	#need to shutdown the watchdog thread when we're done with the job manager
 	def shutdown(self):

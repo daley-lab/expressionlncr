@@ -1,23 +1,28 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # wraps urllib2 functions with a user agent spoof to circumvent anti-crawling behaviour
 # of some sites.
-
 
 import errno
 import re
 import os
 import sys
-import urllib2
+import urllib.request
+import urllib.error
+import urllib.parse
 
 
 #pass in url to file to download, and the output (optionally including directories 
 # to create above file)
-def simpleDownload(url, output):
+def simpleDownload(url, output, force=False):
+  if not force and os.path.isfile(output):
+    print(f'Output file {output} already exists, skipping download ...', file=sys.stdout)
+    return
+  print(f'Downloading {url} to {output} ...')
   #download the whole file into memory
-  user_agent = 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:44.0) Gecko/20100101 Firefox/44.0'
+  user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
   headers = {'User-Agent': user_agent} 
-  request = urllib2.Request(url, None, headers)
-  response = urllib2.urlopen(request)
+  request = urllib.request.Request(url, None, headers)
+  response = urllib.request.urlopen(request)
   data = response.read()
   #create any missing directories in the output path
   createPathToFile(output)
@@ -31,12 +36,12 @@ def simpleDownload(url, output):
 def createPathToFile(output):
   dirname = os.path.dirname(output)
   if dirname and not os.path.exists(dirname):
-    print 'Creating directories: ' + dirname + ' ...'
+    print('Creating directories: ' + dirname + ' ...')
     try:
       os.makedirs(dirname)
     except OSError as err:
       if err.errno != errno.EEXIST:
-        print >> sys.stderr, 'Could not create directory for file at: ' + dirname
+        print('Could not create directory for file at: ' + dirname, file=sys.stderr)
         raise err
 
 def remove(removefile):
@@ -44,16 +49,16 @@ def remove(removefile):
     os.remove(removefile)
   except OSError as err:
     if err.errno != errno.ENOENT:
-      print >> sys.stderr, 'Could not remove file at: ' + removefile
+      print('Could not remove file at: ' + removefile, file=sys.stderr)
       raise err
 
 #returns content instead of writing to a file
 def getUrl(url):
-  user_agent = 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:44.0) Gecko/20100101 Firefox/44.0'
-  headers={'User-Agent': user_agent} 
-  request = urllib2.Request(url, None, headers)
-  response = urllib2.urlopen(request)
-  data = response.read()
+  user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
+  headers = {'User-Agent': user_agent} 
+  request = urllib.request.Request(url, None, headers)
+  response = urllib.request.urlopen(request)
+  data = response.read().decode('utf-8')
   return data
 
 #returns list of files and file sizes for a folder specified by the url.
@@ -73,9 +78,9 @@ def getFolderInfo(url):
       #split the line contents by whitespace.
       cols = re.split('\s+', line)
       if len(cols) <= nameCol or len(cols) <= sizeCol:
-        print >> sys.stderr, 'python2 urllib / ftplib returning unexpected FTP ' + \
-        'contents format @ downloader.getFolderInfo()'
-        print >> sys.stderr, 'url: %s' % url
+        print('python3 urllib / ftplib returning unexpected FTP ' + \
+        'contents format @ downloader.getFolderInfo()', file=sys.stderr)
+        print('url: %s' % url, file=sys.stderr)
         err = Exception()
         raise err
       else:
@@ -87,7 +92,7 @@ def getFolderInfo(url):
 def __main__():
   ftp = 'ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE10nnn/GSE10000/matrix/'
   info = getFolderInfo(ftp)
-  print info
+  print(info)
 
 if __name__ == '__main__':
   __main__()

@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 #
 #functions related to working with NCBI e-utilities
 #
@@ -10,21 +10,18 @@
 #https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=gds&query_key=XX&WebEnv=YY&retmode=xml&version=2.0&retmax=10
 #
 
-
-import pdb
-
 import sys
-import urllib
+import urllib.parse
 import xml.etree.cElementTree as cet
 
 #local
 import downloader
 
 
-def getEsearch(database, searchTerms, output, retstart=None, retmax=None):
+def getEsearch(database, searchTerms, output, retstart=None, retmax=None, overwrite=False):
   baseurl = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi'
   if retstart and retmax:
-    params = urllib.urlencode({
+    params = urllib.parse.urlencode({
       'db': database,
       'term': searchTerms,
       'retmax': retmax,
@@ -35,7 +32,7 @@ def getEsearch(database, searchTerms, output, retstart=None, retmax=None):
       'tool': 'ncbitools.py'
     })
   else:
-    params = urllib.urlencode({
+    params = urllib.parse.urlencode({
       'db': database,
       'term': searchTerms,
       'usehistory': 'y',
@@ -44,13 +41,13 @@ def getEsearch(database, searchTerms, output, retstart=None, retmax=None):
       'tool': 'ncbitools.py'
     })
   url = baseurl + '?%s' % params
-  print 'Querying NCBI eSearch: ' + url
-  downloader.simpleDownload(url, output)
+  print('Querying NCBI eSearch: ' + url)
+  downloader.simpleDownload(url, output, force=overwrite)
 
-def getEsummary(database, queryKey, webEnv, output, retstart=None, retmax=None):
+def getEsummary(database, queryKey, webEnv, output, retstart=None, retmax=None, overwrite=False):
   baseurl = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi'
   if retstart and retmax:
-    params = urllib.urlencode({
+    params = urllib.parse.urlencode({
       'db': database,
       'query_key': queryKey,
       'WebEnv': webEnv,
@@ -62,7 +59,7 @@ def getEsummary(database, queryKey, webEnv, output, retstart=None, retmax=None):
       'tool': 'ncbitools.py'
     })
   else:
-    params = urllib.urlencode({
+    params = urllib.parse.urlencode({
       'db': database,
       'query_key': queryKey,
       'WebEnv': webEnv,
@@ -72,8 +69,8 @@ def getEsummary(database, queryKey, webEnv, output, retstart=None, retmax=None):
       'tool': 'ncbitools.py'
     })
   url = baseurl + '?%s' % params
-  print 'Querying NCBI eSummary: ' + url
-  downloader.simpleDownload(url, output)
+  print('Querying NCBI eSummary: ' + url)
+  downloader.simpleDownload(url, output, force=overwrite)
 
 #returns a 2-tuple of (<QueryKey> value, <WebEnv> value)
 def parseEsearch(esearchFile):
@@ -111,17 +108,17 @@ def parseEsummary(esummaryFile, accessionType, filterType=None, filterValue=None
     # accession using a GDS query, there's potentially >1 GSE per GDS.
     accns = docsum.findall(accessionType)
     if not accns:
-      print >> sys.stderr, 'No ID found for %s %s' \
-          % (accessionType, docsum.attrib['uid'])
+      print('No ID found for %s %s' \
+          % (accessionType, docsum.attrib['uid']), file=sys.stderr)
       continue
     if filterType and filterValue:
       #only get the first. shouldn't have more than 1 tag for filter (for ex. <title>).
       filtr = docsum.find(filterType)
       if not filtr or not filtr.text:
-        print >> sys.stderr, 'No %s filter tag found for %s %s' \
-            % (filterType, accessionType, docsum.attrib['uid'])
+        print('No %s filter tag found for %s %s' \
+            % (filterType, accessionType, docsum.attrib['uid']), file=sys.stderr)
         continue
-      if not (filterValue in filtr.text):
+      if filterValue not in filtr.text:
         continue
     for acc in accns:
       accessions.add(acc.text)
@@ -130,25 +127,25 @@ def parseEsummary(esummaryFile, accessionType, filterType=None, filterValue=None
 #enter a database and search terms, and output
 # found accessions to a given file
 def getAccessionsFromSearch(database, accessionType, terms,
-    esearchOutput, esummaryOutput, filterType=None, filterValue=None):
+    esearchOutput, esummaryOutput, filterType=None, filterValue=None, overwrite=True):
   accessions = set()
   #saves esearch to file
-  getEsearch(database, terms, esearchOutput)
+  getEsearch(database, terms, esearchOutput, overwrite=overwrite)
   #parses params linking to eSummary from esearch file
   try:
     (queryKey, webEnv) = parseEsearch(esearchOutput)
     #saves esummary results xml file
-    getEsummary(database, queryKey, webEnv, esummaryOutput)
+    getEsummary(database, queryKey, webEnv, esummaryOutput, overwrite=overwrite)
     #parses esummary for accession ids and returns them
     accessions = parseEsummary(esummaryOutput, accessionType, filterType, filterValue)
-  except Exception as e:
-    print 'Error: getAccessionsFromSearch failed, returning empty array'
+  except Exception:
+    print('Error: getAccessionsFromSearch failed, returning empty array')
   return accessions
 
 def __main__(argv):
   esearchOutput = argv[1]
   (queryKey, webEnv) = parseEsearch(esearchOutput)
-  print 'querykey, webenv : (%s, %s)' % (queryKey, webEnv)
+  print('querykey, webenv : (%s, %s)' % (queryKey, webEnv))
 
 if __name__ == '__main__':
   __main__(sys.argv)
