@@ -66,7 +66,7 @@ Run gui.py with python.
 
 ### Pre-built Linux build:
 
-The release comes with a pre-built executable for the GUI: expressionlncr. Feel free to extract and install the release archive wherever. The executable needs to be kept in the same folder as the python scripts, as the GUI runs the scripts as jobs and needs to be able to find them.
+The release comes with a pre-built executable for the GUI: expressionlncr. Feel free to extract the release archive wherever. The executable needs to be kept in the same folder as the python scripts, as the GUI runs the scripts as jobs and needs to be able to find them.
 
 ### Running Scripts:
 
@@ -138,17 +138,7 @@ It's worth noting if you're more interested in a pseudo-random subset of data th
 
 Parses the series in data/matrices using overlap file data/overlap.bed and BED file data/lncrnas.bed; outputs results to data/results/.
 
-A more detailed explanation is that the parser generates a map of GEO Platform -> Probe Set -> Probe Name -> List of max probe value among samples for each GEO series. Then, it reads in data/overlap.bed and makes a map of the previously found lncRNA (or whatever you specified as "lncRNAs") -> probe relationships. It uses these two maps to generate a map of lncRNA -> expression. Then, it bins out the lncRNAs based on expression/no probe data/no probes to these files: data/results/expressed.lncrnas.txt, data/results/noexpressiondata.lncrnas.txt, data/results/nonoverlapping.lncrnas.txt.
-
-By the time this step is over, you will likely get several warning messages like "... expected expression data for lncRNA ... but none found". It can be safely ignored as it will just result in fewer found lncRNA/expression data matches, but this is likely due to one of the following reasons:
-
-*a. Your overlap.bed file has more matches than you downloaded information for, i.e. you truncated the search step.
-
-*b. An Ensembl funcgen database expression array has no GPL number mapped to it in org_array_gpl.py (for ex. Human HT 12 v3, v4), and this array's probe(s) overlaps your lncRNA file.
-
-*c. There are no GEO DataSets corresponding to expression arrays overlapping your lncRNAs, only GEO Series. You may re-run the find_geo_dataseries.py step using flag "-s" or "--allow-data-series" to include Series.
-
-*d. A probe overlapping the lncRNA is called something slightly different in the Ensembl funcgen database file compared to the GEO Series matrix summary file.
+A more detailed explanation is that the parser generates a map of GEO Platform -> Probe Set -> List of max probe set value among samples for each GEO series. Then, it reads in data/overlap.bed and makes a map of the previously found lncRNA (or whatever you specified as "lncRNAs") -> probe relationships. It uses these two maps to generate a map of lncRNA -> expression. Then, it bins out the lncRNAs based on expression/no probe data/no probes to these files: data/results/expressed.lncrnas.txt, data/results/noexpressiondata.lncrnas.txt, data/results/nonoverlapping.lncrnas.txt.
 
 You can terminate the parse_geo_dataseries.py process while it reads "parsing file (x/y): filename @ time ..." and restart the script later; parsing completion progress is saved to a file (-c, --completed-files-file) which defaults to data/results/expressed_series/completed_files.txt.
 

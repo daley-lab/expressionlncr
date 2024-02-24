@@ -7,7 +7,7 @@
 # -directory with series data matrix files. file names like GSE*_series_matrix.tar.gz
 # -directory for output files (lncRNA w/ overlap w/ expr, lncRNA w/ overlap w/o expr, 
 #  lncRNA w/ overlap n/a expr, lncRNA w/o overlap)
-# -XML file with mapping of overlap from lncRNA to probe(s)
+# -BED-like file with mapping of overlap from lncRNA to probe(s)
 # -funcgen organism - for mapping probe platform to GPL id in results
 # -original lncRNA source file - for finding difference of lncRNAs w/ and w/o overlap
 #
@@ -23,15 +23,15 @@
 #    ignoring the "ID_REF" "GSM...." "GSM...." ... header row
 #    store !Series_platform_id "GPL...." ->
 #            !Series_geo_accession "GSE...." ->
-#              probe name ->
+#              probe set name ->
 #                max {probe expression value} (among all samples)
-# -read in the XML file of lncRNA -> probe overlap
-# -note probes read in as probe platform -> probe set -> probe name
-# -use org_array_gpl.py ORG_TO_ARRAY_TO_GPL map and organism input variable 
+# -read in the BED-like file of lncRNA -> probe overlap
+# -note probes read in as probe platform -> probe set + probe name
+# -use org_array_gpl.py ORG_TO_ARRAY_TO_GPL map with organism input variable 
 #   to map the GPL id to probe platform name
 # -iterate through the overlapping probes, looking for expression
-#   in the map of GPL -> GSE -> probe name -> max value
-# -finally, combines the results from all the series matrix files into one 
+#   in the map of GPL -> GSE -> probe set name -> max value
+# -finally, combine the results from all the series matrix files into one 
 #   expressed lncRNAs output file
 #
 # Folder structure:
@@ -81,7 +81,7 @@ def parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFiles
   if not overlapMap:
     print('Error: could not parse overlap file %s' % overlapFile) 
     return
-  print('Reading in data series matrix files @ %s/GSE*_series_matrix.txt.gz ...' % dataDir)
+  print(f'Reading in data series matrix files @ {dataDir if dataDir.endswith("/") else dataDir + "/"}GSE*_series_matrix.txt.gz ...')
   #make sure data dir exists
   if not os.path.exists(dataDir):
     err = 'No data directory at: %s' % dataDir
@@ -93,7 +93,7 @@ def parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFiles
   expressedLncrnasDir = '%s/expressed_series' % outDir
   downloader.createPathToFile(expressedLncrnasDir + '/')
   #read in zipped series data matrices one file at a time
-  matrixFileNames = ['%s/%s' % (dataDir, f) for f in os.listdir(dataDir) if (
+  matrixFileNames = [os.path.normpath(f'{dataDir}/{f}') for f in os.listdir(dataDir) if (
                       #only files
                       os.path.isfile(os.path.join(dataDir, f)) and
                       #ending with _series_matrix.txt.gz
@@ -139,13 +139,13 @@ def parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFiles
   #once all the expressed lncrna files for each GEO series are written, 
   # then merge them all  into one expressed lncrna file that the user expects.
   #write header line of expressed lncrnas file once only
-  expressedLncrnasFile = '%s/expressed.lncrnas.txt' % outDir
+  expressedLncrnasFile = os.path.normpath(f'{outDir}/expressed.lncrnas.txt')
   print('> Expressed lncRNAs file will be written to: %s' % expressedLncrnasFile)
   expressedLncrnas = mergeExpressedLncrnaFiles(expressedLncrnasDir, expressedLncrnasFile)
   #create output file of lncrnas with overlap but missing expression data
   # (i.e. not in expressedLncrnas list but in overlapMap)
   try:
-    noExpressionDataLncrnasFile = '%s/noexpressiondata.lncrnas.txt' % outDir
+    noExpressionDataLncrnasFile = os.path.normpath(f'{outDir}/noexpressiondata.lncrnas.txt')
     print('> No expression data lncRNAs file: %s ... @ %s' % ( \
         noExpressionDataLncrnasFile, str(datetime.datetime.now())))
     with open(noExpressionDataLncrnasFile, 'w') as nedlf:
@@ -153,7 +153,7 @@ def parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFiles
       for (lncrnaName, lncrnaProbeList) in overlapMap.items():
         if lncrnaName.upper() not in expressedLncrnas:
           noDataList.append(lncrnaProbeList)
-      header = '#lncRNA\toverlapping Ensembl probe(s), comma delimited\n'
+      header = '#lncRNA\toverlapping Ensembl probe set(s), comma delimited\n'
       nedlf.write(header)
       #sort the list of tuples on the first element's name.
       #it's a tuple of ChromFeature.
@@ -179,11 +179,11 @@ def parseData(dataDir, outDir, overlapFile, lncrnaFile, organism, completedFiles
     print('> Parsing all lncRNAs from original input %s ...' % lncrnaFile)
     lncrnaList = parseLncrnasFromBed(lncrnaFile)
     nonOverlappingLncrnas = getNonOverlappingLncnras(lncrnaList, overlapMap)
-    nonOverlappingLncrnasFile = '%s/nonoverlapping.lncrnas.txt' % outDir
+    nonOverlappingLncrnasFile = os.path.normpath('%s/nonoverlapping.lncrnas.txt' % outDir)
     print('> Non-Overlapping lncRNAs file: %s ... @ %s' % ( \
-        noExpressionDataLncrnasFile, str(datetime.datetime.now())))
+        nonOverlappingLncrnasFile, str(datetime.datetime.now())))
     with open(nonOverlappingLncrnasFile, 'w') as nolf:
-      header = '#lncRNAs from lncRNA source not overlapping Ensembl probe(s)\n'
+      header = '#lncRNAs from lncRNA source not overlapping Ensembl probe sets\n'
       nolf.write(header)
       for lncrna in sorted(nonOverlappingLncrnas):
         line = '%s\n' % lncrna
@@ -208,7 +208,7 @@ def getLncrnaExpressionMap(overlapMap, expressionMap, organism):
       lncrnaExpressionMap[lncrna] = []
       #for each probe
       for probeChromFeat in lncrnaProbeList[1:]:
-        # Grab the ensembl probe array name from the probe set name.
+        # Grab the probe array and probe set name from the full probe name.
         # Full probe name string examples:
         # - HG-U133_Plus_2/200012_x_at:1135:649; -> 200012_x_at is probe set
         # - HG-U133A/AFFX-HUMRGE/M10098_3_at:309:481; -> AFFX-HUMRGE/M10098_3_at is probe set, 309:481; is specific probe
@@ -250,80 +250,84 @@ def getLncrnaExpressionMap(overlapMap, expressionMap, organism):
             continue
   return lncrnaExpressionMap
 
-#write out the expression map for each series matrix file to file.
-# file format is of expressed lncrna file type, minus the header.
-#expressed lncrna file type:
-#header = '#lncRNA(name)\tlncRNA(chrom)\tlncRNA(start)\tlncRNA(stop)\tlncRNA(strand)\t' + \
-#    'probe(array)\tprobe(set)\tprobe(name)\tprobe(gpl)\tprobe(gse)\t' + \
-#    'probe(max gse value)\tprobe2(array)\tprobe2(set)\t...etc...\n'
+
 def writeExpressedLncrnas(lncrnaExpressionMap, expressedLncrnasFile):
-  #create output file of lncrnas with expressed values and zero expression
+  '''
+  Write out expressed lncRNAs as BED-6, plus extra tab delim columns with probe set max expression values for different studies.
+  
+  Probe set expression columns like:
+  array/probe_set[GSE1:maxval,GSE2:maxval,...] array2/probe_set2[GSE1:maxval,GSE3:maxval,...]
+
+  For example:
+  chr1	11234	12344	NONHSAG000011.1 0 + HG-U133A/210206_s_at[GSE1:56.8,GSE1234:12.34,GSE56:78.0] HG-U133A/210208_at[GSE1:17.8,GSE1234:12.0,GSE56:100.0] 
+  '''
   try:
     with open(expressedLncrnasFile, 'w') as elf:
-      #for each set of probe expressions for a lncrna find out if any are expression > 0.
-      #write out to appropriate output file.
-      #note: lncrna is a ChromFeature bean
+      # Note: lncrna is a ChromFeature bean
       for (lncrnaBean, probeExpressions) in sorted(lncrnaExpressionMap.items(), key=lambda x: x[0].name):
-        #we have new expression
         if probeExpressions and len(probeExpressions) > 0:
-          probeColString = ''
-          for probeExpression in probeExpressions:
-            p = probeExpression
-            probeSetName = p.probe.probeSetName or ''
-            #note that we add onto the previous probe columns
-            probeColString += '\t' + '\t'.join([
-              str(p.probe.arrayName),
-              str(probeSetName),
-              str(p.probe.name),
-              str(p.gpl),
-              str(p.gse),
-              str(p.maxVal)
-            ])
-          #construct output line of lncrna and overlapping probe data
-          lncrnaCols = '\t'.join([
-              str(lncrnaBean.name),
+          probeSetExpressions = {}
+          for p in probeExpressions:
+            probeSetName = p.probe.probeSetName
+            array = p.probe.arrayName
+            arrayPlusProbeSet = f'{array}/{probeSetName}'
+            gse = p.gse
+            if not array or not probeSetName or not gse:
+              continue
+            maxVal = p.maxVal or ''
+            try:
+              probeSetExpressions[arrayPlusProbeSet]
+            except KeyError:
+              probeSetExpressions[arrayPlusProbeSet] = {}
+            probeSetExpressions[arrayPlusProbeSet][gse] = maxVal
+          probeString = ''
+          for (arrayPlusProbeSet, gseToVal) in probeSetExpressions.items():
+            studyValues = [f'{gse}:{val}' for (gse, val) in gseToVal.items()]
+            probeSetString = f'{arrayPlusProbeSet}[{",".join(studyValues)}]'
+            probeString += '\t' + probeSetString
+          lncrnaString = '\t'.join([
               str(lncrnaBean.chrom),
               str(lncrnaBean.start),
               str(lncrnaBean.stop), 
+              str(lncrnaBean.name),
+              '0',
               str(lncrnaBean.strand)
           ])
-          line = f'{lncrnaCols}{probeColString}\n'  #note: probeColString starts with a tab
+          line = f'{lncrnaString}{probeString}\n'
           elf.write(line)
         else:
-          #by changing the pipeline to parse one matrix file at a time and writing 
-          # out the expressed lncrnas, the error message below will be trigger by most lncrnas
-          # for each matrix file and is no longer useful.
+          # By changing the pipeline to parse one matrix file at a time and writing 
+          #  out the expressed lncrnas, the error message below will be trigger by some lncrnas
+          #  for every matrix file and is no longer useful.
           pass
-          #no expression data? this is unexpected so warn, but continue.
-          #possible cases (#3 is most likely, use option -s in find_geo_dataseries.py to workaround, 
-          # caveats being: much more data to download, series might be less likely to have series matrix 
-          # summary results file)
-          #1. user uses an overlap.bed that contains more than the subset of downloaded information
-          #2. an Ensembl funcgen database expression array has no GPL mapped in org_array_gpl.py
-          #3. there are no GEO DataSets corresponding to the expression array in GEO, only GEO Series
-          #4. there is a mismatch between Ensembl funcgen database probe names and the GEO Series matrix summary file
+          # No expression data? this is unexpected so warn, but continue.
+          # Possible cases (#3 is most likely, use option -s in find_geo_dataseries.py to workaround, 
+          #  caveats being: much more data to download, series might be less likely to have series matrix 
+          #  summary results file).
+          # 1. user uses an overlap.bed that contains more than the subset of downloaded information
+          # 2. an Ensembl funcgen database expression array has no GPL mapped in org_array_gpl.py
+          # 3. there are no GEO DataSets corresponding to the expression array in GEO, only GEO Series
+          # 4. there is a mismatch between Ensembl funcgen database probe names and the GEO Series matrix summary file
           #print >> sys.stderr, 'Warning: Expected expression data for lncRNA ' + \
           #    '%s but none found. Check the "no expression data" lncRNAs file for a full list.' % lncrnaBean.name
   except Exception as err:
     print(err, file=sys.stderr)
     print('Error writing expressed lncRNAs file %s' % expressedLncrnasFile, file=sys.stderr)
 
-#join all the files of lncrna/expression probes into one file.
-# returns list of expressed lncRNA names (strings).
-def mergeExpressedLncrnaFiles(dataDir, outputFile):
-  #first read in existing lncrna -> probe(s) expression files and create a map.
-  #
-  #note: this is a map of
-  #   lncrna name -> file columns (lncrna, chrom, start, stop, strand, probe array, probeset, 
-  #  probe name, probe gpl, etc etc....
-  #see file header written below for more info.
-  lncrnaHeaderCols = ['lncRNA(name)', 'lncRNA(chrom)', 'lncRNA(start)', 'lncRNA(stop)', 'lncRNA(strand)']
+
+def mergeExpressedLncrnaFiles(dataDir: str, outputFile: str) -> list[str]:
+  '''
+  Join all the files of expressed lncrna data into one output file.
+
+  Returns:
+    list[str]: List of expressed lncRNA names.
+  '''
+  lncrnaHeaderCols = ['lncRNA(chrom)', 'lncRNA(start)', 'lncRNA(stop)', 'lncRNA(name)', 'n/a', 'lncRNA(strand)']
   numLncrnaCols = len(lncrnaHeaderCols)
-  header = '#' + '\t'.join(lncrnaHeaderCols) + '\t' + \
-    'probe(array)\tprobe(set)\tprobe(name)\tprobe(gpl)\tprobe(gse)\t' + \
-    'probe(max gse value)\tprobe2(array)\tprobe2(set)\t...etc...\n'
-  lncrnaExpressionMap = {}
-  fileNames = ['%s/%s' % (dataDir, f) for f in os.listdir(dataDir) if (
+  header = '#' + '\t'.join(lncrnaHeaderCols) + \
+    '\tprobe(array)/probe(set)[gse:max(gse value),gse2:max,...]\t' + \
+    '\tprobe2(array)/probe2(set)[gse:max(gse value),gse3:max,...]\n'
+  fileNames = [os.path.normpath(f'{dataDir}/{f}') for f in os.listdir(dataDir) if (
                       #only files
                       os.path.isfile(os.path.join(dataDir, f)) and
                       #ending with .expressed.lncrnas.txt
@@ -333,39 +337,47 @@ def mergeExpressedLncrnaFiles(dataDir, outputFile):
                     )]
   numFiles = len(fileNames)
   count = 1
+  lncrnaColsMap = {}
+  lncrnaExpressionMap = {}
   for fileName in sorted(fileNames):
     #read in series specific lncrna expression map
-    print(' > merging file (%s/%s): %s @ %s' % (count, numFiles, fileName, str(datetime.datetime.now())))
+    print(' > Merging file (%s/%s): %s @ %s' % (count, numFiles, fileName, str(datetime.datetime.now())))
     count += 1
-    fileExpressionMap = {}
     with open(fileName, 'r') as f:
       reader = csv.reader(f, delimiter='\t')
       for cols in reader:
-        lncrna = cols[0].upper()
-        #upper-case all lncrna name keys in the maps, because different series might 
-        # have upper/lower-case in the series matrix file.
-        fileExpressionMap[lncrna.upper()] = cols
-    #merge the series specific map with the global map
-    for lncrna in fileExpressionMap:
-      if lncrna in lncrnaExpressionMap:
-        #merge
-        existingCols = lncrnaExpressionMap[lncrna]
-        newProbeCols = fileExpressionMap[lncrna][numLncrnaCols:]
-        for col in newProbeCols:
-          existingCols.append(col)
-        lncrnaExpressionMap[lncrna] = existingCols
-      else:
-        #add new
-        lncrnaExpressionMap[lncrna] = fileExpressionMap[lncrna]
+        lncrna = cols[c.BED_DEFAULTS['nameCol']].upper()
+        try:
+          lncrnaExpressionMap[lncrna]
+        except KeyError:
+          lncrnaExpressionMap[lncrna] = {}
+        lncrnaColsMap[lncrna] = cols[:numLncrnaCols]
+        # Each expression column is: array/probe_set[gse:val]
+        for expressionCol in cols[numLncrnaCols:]:
+          try:
+            (arrayPlusProbeSet, studyVal) = expressionCol.replace(']', '').split('[', 1)
+          except Exception:
+            print('Error: bad line: ' + "\t".join(cols), file=sys.stderr)
+            continue
+          try:
+            lncrnaExpressionMap[lncrna][arrayPlusProbeSet]
+          except KeyError:
+            lncrnaExpressionMap[lncrna][arrayPlusProbeSet] = []
+          studyValues = lncrnaExpressionMap[lncrna][arrayPlusProbeSet]
+          studyValues.append(studyVal)
+          lncrnaExpressionMap[lncrna][arrayPlusProbeSet] = studyValues
   #write out the final expresssed lncrnas file
   with open(outputFile, 'w') as out:
-    #write the file header
     out.write(header)
-    #write out the expression map
     for lncrna in sorted(lncrnaExpressionMap):
-      line = '\t'.join(lncrnaExpressionMap[lncrna]) + '\n'
+      line = '\t'.join(lncrnaColsMap[lncrna])
+      for (arrayPlusProbeSet, studyValues) in lncrnaExpressionMap[lncrna].items():
+        probeSetString = f'{arrayPlusProbeSet}[{",".join(studyValues)}]'
+        line += '\t' + probeSetString
+      line += '\n'
       out.write(line)
   return list(lncrnaExpressionMap.keys())
+
 
 def parseSeriesDataMatrix(matrixFile):
   # Map of GPL -> probe set (upper case) -> map(GSE, probe max value).
@@ -477,18 +489,11 @@ def getChromFeature(bed6Cols: list[str]) -> beans.ChromFeature:
   '''
   Given BED-6 format columns return chromosome feature
   '''
-  CHROM_POS = 0
-  START_POS = 1
-  STOP_POS = 2
-  NAME_POS = 3
-  #SCORE_POS = 4
-  STRAND_POS = 5
-  chrom = bed6Cols[CHROM_POS]
-  start = bed6Cols[START_POS]
-  stop = bed6Cols[STOP_POS]
-  name = bed6Cols[NAME_POS]
-  #score = bed6Cols[SCORE_POS]
-  strand = bed6Cols[STRAND_POS]
+  chrom = bed6Cols[c.BED_DEFAULTS['chromCol']]
+  start = bed6Cols[c.BED_DEFAULTS['startCol']]
+  stop = bed6Cols[c.BED_DEFAULTS['stopCol']]
+  name = bed6Cols[c.BED_DEFAULTS['nameCol']]
+  strand = bed6Cols[c.BED_DEFAULTS['strandCol']]
   feat = beans.ChromFeature(chrom, start, stop, strand, name)
   return feat
 
@@ -536,6 +541,7 @@ def usage(defaults):
   print('Defaults:')
   for key, val in sorted(iter(defaults.items()), key=operator.itemgetter(0)):
     print(str(key) + ' - ' + str(val))
+
 
 def __main__():
   shortOpts = 'hvf:d:o:l:r:c:F'
