@@ -658,9 +658,9 @@ class ExpressionForm(GuiForm):
     dataDir = os.path.normpath(guiVars['expressionDataDir'])
     searchTerms = guiVars['expressionSearchTerms']
     #now try to intelligently set based on previous gui forms
-    if guiVars['overlapOutputA']:
-      #output A should be the expression probe bed file
-      inputF = os.path.normpath(guiVars['overlapOutputA'])
+    if guiVars['overlapOutputB']:
+      #output B should be the expression probe bed file
+      inputF = os.path.normpath(guiVars['overlapOutputB'])
     if guiVars['probeDataDir']:
       dataDir = os.path.normpath(guiVars['probeDataDir'])
       outDir = os.path.normpath('%s/matrices' % guiVars['probeDataDir'])
